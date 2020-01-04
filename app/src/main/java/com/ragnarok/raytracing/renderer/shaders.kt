@@ -185,7 +185,7 @@ val calcColorFs = """
             if (t == tRoom.y) {
                 normal = -normalForCube(hit, roomCubeMin, roomCubeMax);
                 
-                float delta = 0.9999;
+                float delta = 0.55;
                 if (hit.x < -1.0 * delta) {
                     surfaceColor = vec3(1.0, 0.3, 0.1);
                 } else if (hit.x > delta) {
