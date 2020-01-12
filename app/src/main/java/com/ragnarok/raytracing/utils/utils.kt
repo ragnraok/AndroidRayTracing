@@ -8,7 +8,13 @@ import android.os.SystemClock
 
 fun clearGL() {
     GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
-    GLES30.glClearColor(0.0f, 0f, 0.0f, 1.0f)
+    GLES30.glClearColor(0.75f, 0.75f, 0.75f, 1.0f)
+}
+
+fun gen2DTextures(texs: IntArray) {
+    if (texs.isNotEmpty()) {
+        GLES30.glGenTextures(texs.size, texs, 0)
+    }
 }
 
 fun viewport(width: Int, height: Int) {
@@ -27,6 +33,12 @@ fun genFBO(): Int  {
     return fboArray[0]
 }
 
+fun genRBO(): Int {
+    val rboArray = intArrayOf(0)
+    GLES30.glGenRenderbuffers(1, rboArray, 0)
+    return rboArray[0]
+}
+
 fun genBuffer(): Int {
     val vboArray = intArrayOf(0)
     GLES30.glGenBuffers(1, vboArray, 0)
@@ -36,8 +48,8 @@ fun genBuffer(): Int {
 fun setup2DTexParam() {
     GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE)
     GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE)
-    GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
-    GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+    GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST)
+    GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_NEAREST)
 }
 
 fun setCubemapTexParam(withMipmap: Boolean = false) {

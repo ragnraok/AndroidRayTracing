@@ -3,12 +3,17 @@ package com.ragnarok.raytracing.renderer
 import org.intellij.lang.annotations.Language
 
 const val eps = 0.0001
-const val bounces = 5
+const val bounces = 5.0
 const val infinity = 10000.0
+
+object PassConstants {
+    var eachPassOutputWidth = 512.0
+    var eachPassOutputHeight = 512.0
+}
 
 @Language("glsl")
 val outputVs = """
-     #version 300 es
+    #version 300 es
     layout (location = 0) in vec3 aPos;
     layout (location = 1) in vec2 aTexCoords;
 
@@ -23,10 +28,14 @@ val outputVs = """
 val outputFs = """
     #version 300 es
     precision highp float;
+    
+    out vec4 FragColor;
     in vec2 TexCoords;
     uniform sampler2D texture;
+
     void main() {
-        gl_FragColor = texture2D(texture, TexCoords);
+        FragColor = texture(texture, TexCoords);
+//        FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
 """.trimIndent()
 
@@ -68,25 +77,32 @@ val tracerVs = """
 // https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
 @Language("glsl")
 val randomFunc = """
-    float random(vec2 co){
-        return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+    float random(vec2 co, float bias){
+        return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453 + bias);
     }
 """.trimIndent()
 
-const val piVal = "3.14159265359"
+
+const val piVal = "3.141592654"
 
 @Language("glsl")
-const val randomVec1 = "vec2(gl_FragCoord.x, gl_FragCoord.y)"
+const val randomVec1a = "vec2(gl_FragCoord.x + time, gl_FragCoord.y + time)"
 
 @Language("glsl")
-const val randomVec2 = "vec2(gl_FragCoord.y, gl_FragCoord.x)"
+const val randomVec2b = "vec2(gl_FragCoord.y + time, gl_FragCoord.x + time)"
+
+@Language("glsl")
+const val randomVec3a = "vec3(12.9898, 78.233, 151.7182)"
+
+@Language("glsl")
+const val randomVec3b = "vec3(63.7264, 10.873, 623.6736)"
 
 // check https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html#generatingrandomdirections
 @Language("glsl")
 val uniformRandomDirection = """
     vec3 uniformRandomDirection() {
-        float r1 = random($randomVec1);
-        float r2 = random($randomVec2);
+        float r1 = random($randomVec1a, time);
+        float r2 = random($randomVec2b, time);
         
         float z = 1.0 - 2.0 * r2;
         float phi = 2.0 * $piVal * r1;
@@ -98,9 +114,9 @@ val uniformRandomDirection = """
 
 @Language("glsl")
 val cosineWeightDirection = """
-    vec3 cosineWeightDirection(vec3 normal) {
-        float r1 = random($randomVec1);
-        float r2 = random($randomVec2);
+    vec3 cosineWeightDirection(vec3 normal, float bias) {
+        float r1 = random($randomVec1a, time + bias);
+        float r2 = random($randomVec2b, time + bias);
         float r = sqrt(r1);
         float theta = 2.0 * $piVal * r2;
         float x = r * cos(theta);
@@ -109,9 +125,9 @@ val cosineWeightDirection = """
         // calc new ortho normal basic
         vec3 s,t;
         if (abs(normal.x) < 0.5) {
-            s = cross(normal, vec3(1.0, 0.0, 0.0));
+            s = cross(normal, vec3(1, 0, 0));
         } else {
-            s = cross(normal, vec3(0.0, 1.0, 0.0));
+            s = cross(normal, vec3(0, 1, 0));
         }
         t = cross(normal, s);
         return x * s + y * t + z * normal;
@@ -163,7 +179,13 @@ $roomCubeDefine
 """
 
 @Language("glsl")
-const val backgroundColor = "vec3(0.1)"
+const val backgroundColor = "vec3(0.75)"
+
+@Language("glsl")
+const val lightColor = "vec3(0.5)"
+
+@Language("glsl")
+const val lightPos = "vec3(0.0, 0.8, -0.5)"
 
 @Language("glsl")
 val calcColorFs = """
@@ -171,7 +193,7 @@ val calcColorFs = """
         vec3 colorMask = vec3(1.0);
         vec3 finalColor = vec3(0.0);
         
-        for (int pass = 0; pass < $bounces; pass++) {
+        for (float pass = 0.0; pass < $bounces; pass++) {
             vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);
             
             float t = $infinity;
@@ -180,27 +202,29 @@ val calcColorFs = """
             }
             
             vec3 hit = origin + ray * t;
-            vec3 normal;
+            vec3 normal = vec3(0);
             vec3 surfaceColor = $backgroundColor;
             if (t == tRoom.y) {
                 normal = -normalForCube(hit, roomCubeMin, roomCubeMax);
                 
-                float delta = 0.55;
+                float delta = 0.9999;
                 if (hit.x < -1.0 * delta) {
                     surfaceColor = vec3(1.0, 0.3, 0.1);
                 } else if (hit.x > delta) {
                     surfaceColor = vec3(0.3, 1.0, 0.1);
                 }
                 // create a new diffuse ray
-                ray = cosineWeightDirection(normal);
+                ray = cosineWeightDirection(normal, pass);
             } else if (t == $infinity) {
                 break;
             } else {
-                
             }
             
+            vec3 lightDir = light - hit;
+            float NdotL = max(0.0, dot(normalize(lightDir), normal));
+            
             colorMask *= surfaceColor;
-            finalColor += colorMask;
+            finalColor += colorMask * ($lightColor * NdotL);
             
             origin = hit;
         }
@@ -224,21 +248,20 @@ val tracerFs = """
     uniform float weight; // current render output weight mix with last pass output
     uniform float time; // tick to create diffuse/glossy ray
     
-    uniform sampler2D texture; // last pass output
+    uniform sampler2D previous; // last pass output
     
     $randomRayFunc
         
     $cornellBoxFunc
     
     $calcColorFs
-    
-    vec4 trace(vec3 origin, vec3 dir) {
-        vec3 color = calcColor(origin, dir, vec3(0));
-        return vec4(color, 1.0);
-    }
+
     
     void main() {
-        vec4 color = trace(eyePos, traceRay);
-        FragColor = color;
+        vec3 lightRay = $lightPos + uniformRandomDirection() * 0.1;
+        vec3 color = calcColor(eyePos, traceRay, lightRay);
+        vec2 coord = vec2(gl_FragCoord.x / ${PassConstants.eachPassOutputWidth}, gl_FragCoord.y / ${PassConstants.eachPassOutputHeight});
+        vec3 previousColor = texture(previous, coord).rgb;
+        FragColor = vec4(mix(color, previousColor, weight), 1.0);
     }
 """.trimIndent()

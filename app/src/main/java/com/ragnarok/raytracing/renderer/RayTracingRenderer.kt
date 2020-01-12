@@ -2,15 +2,17 @@ package com.ragnarok.raytracing.renderer
 
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.ragnarok.raytracing.model.Camera
 import com.ragnarok.raytracing.primitive.QuadRenderer
 import glm_.glm
-import glm_.mat4x4.Mat4
-import glm_.vec2.Vec2
 import glm_.vec3.Vec3
-import glm_.vec4.Vec4
 import rangarok.com.androidpbr.utils.Shader
+import rangarok.com.androidpbr.utils.clearGL
+import rangarok.com.androidpbr.utils.gen2DTextures
+import rangarok.com.androidpbr.utils.viewport
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -23,64 +25,81 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
     private var width = 0
     private var height = 0
 
-    private var shader: Shader? = null
-    private var quadRenderer: QuadRenderer? = null
+    private var rayTracingShader: Shader? = null
+    private var pingRenderer: SceneRenderer? = null
+    private var pongRenderer: SceneRenderer? = null
+
+    private var outputShader: Shader? = null
+    private var outputRenderer: QuadRenderer? = null
 
     private val camera = Camera(Vec3(0.0, 0.0, 2.5))
 
+    private val textures = IntArray(2)
+
+    private var renderCount = 0
+
     override fun onDrawFrame(gl: GL10?) {
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
-        GLES30.glClearColor(0.75f, 0.75f, 0.75f, 1.0f)
+        clearGL()
         renderFrame()
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         Log.i(TAG, "onSurfaceChanged, width:$width, height:$height")
-        GLES30.glViewport(0, 0, width, height)
+        viewport(width, height)
         this.width = width
         this.height = height
 
+        PassConstants.eachPassOutputWidth = width.toDouble()
+        PassConstants.eachPassOutputHeight = height.toDouble()
+
+        initRenderer()
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         Log.i(TAG, "onSurfaceCreated")
 
-        initRenderer()
     }
 
     private fun initRenderer() {
-        shader = Shader(tracerVs, tracerFs)
-        quadRenderer = QuadRenderer()
+        textures.fill(0)
+        gen2DTextures(textures)
+        rayTracingShader = Shader(tracerVs, tracerFs)
+
+        pingRenderer = SceneRenderer(rayTracingShader, camera, textures[0])
+        pongRenderer = SceneRenderer(rayTracingShader, camera, textures[1])
+
+        outputShader = Shader(outputVs, outputFs)
+        outputRenderer = QuadRenderer()
+
+
     }
 
     private fun renderFrame() {
+        // render ray tracing scene
         val projection = glm.perspective(glm.radians(camera.zoom), width/height.toFloat(), 0.1f, 1000.0f)
         val view = camera.lookAt(Vec3(0))
-        shader?.apply {
-            enable()
-            var model = Mat4(1.0)
-            val modelViewProjection = projection * view
-            setMat4("projection", projection)
-            setMat4("view", view)
-            setMat4("model", model)
 
-            // generate ray00/ray01/ray10/ray11
-            val eye = camera.position
-            setVec3("eye", eye)
-            setVec3("ray00", getEyeRay(modelViewProjection, Vec2(-1, -1), eye))
-            setVec3("ray01", getEyeRay(modelViewProjection, Vec2(-1, 1), eye))
-            setVec3("ray10", getEyeRay(modelViewProjection, Vec2(1, -1), eye))
-            setVec3("ray11", getEyeRay(modelViewProjection, Vec2(1, 1), eye))
+        pingRenderer?.render(projection, view, pongRenderer?.outputTex?:0, renderCount)
+        pongRenderer?.render(projection, view, pingRenderer?.outputTex?:0, renderCount)
 
+        renderCount++
+
+        clearGL()
+
+        val outputTex = pongRenderer?.outputTex ?: 0
+
+        if (outputTex > 0) {
+            // render output
+            outputShader?.apply {
+                enable()
+                GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, outputTex)
+                setInt("texture", 0)
+                outputRenderer?.render()
+
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
+            }
         }
-
-        quadRenderer?.render()
-    }
-
-    private fun getEyeRay(modelViewProjection: Mat4, screenPos: Vec2, eyeCenter: Vec3): Vec3 {
-        //TODO: randomization process
-        val inv = modelViewProjection.inverse() * Vec4(screenPos.x, screenPos.y, 0, 1)
-        return inv.div(inv.w).toVec3() - eyeCenter
     }
 
 }
