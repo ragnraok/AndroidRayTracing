@@ -3,17 +3,18 @@ package com.ragnarok.raytracing.renderer
 import org.intellij.lang.annotations.Language
 
 const val eps = 0.0001
-const val bounces = 5.0
+const val bounces = 5
 const val infinity = 10000.0
 
 object PassConstants {
-    var eachPassOutputWidth = 512.0
-    var eachPassOutputHeight = 512.0
+    var eachPassOutputWidth = 1024.0
+    var eachPassOutputHeight = 1024.0
 }
 
 @Language("glsl")
 val outputVs = """
     #version 300 es
+    
     layout (location = 0) in vec3 aPos;
     layout (location = 1) in vec2 aTexCoords;
 
@@ -27,7 +28,6 @@ val outputVs = """
 @Language("glsl")
 val outputFs = """
     #version 300 es
-    precision highp float;
     
     out vec4 FragColor;
     in vec2 TexCoords;
@@ -35,14 +35,13 @@ val outputFs = """
 
     void main() {
         FragColor = texture(texture, TexCoords);
-//        FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
 """.trimIndent()
 
 @Language("glsl")
 val tracerVs = """
     #version 300 es
-    precision highp float;
+
     layout (location = 0) in vec3 aPos;
     layout (location = 1) in vec2 aTexCoords;
     
@@ -55,8 +54,7 @@ val tracerVs = """
     uniform vec3 ray01;
     uniform vec3 ray10;
     uniform vec3 ray11;
-    
-    out vec3 WorldPos;
+
     out vec3 traceRay;
     out vec3 eyePos;
     
@@ -64,7 +62,6 @@ val tracerVs = """
     {
         vec2 percent = aPos.xy * 0.5 + 0.5; // [-1, 1] to [0, 1]
         vec3 dir = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);
-        WorldPos = vec3(model * vec4(aPos, 1.0));
         eyePos = eye;
         traceRay = dir;
         gl_Position =  vec4(aPos, 1.0);
@@ -78,7 +75,25 @@ val tracerVs = """
 @Language("glsl")
 val randomFunc = """
     float random(vec2 co, float bias){
-        return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453 + bias);
+        return saturateMediump(fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453 + bias));
+    }
+""".trimIndent()
+
+@Language("glsl")
+val randomFunc2 = """
+    float random2(vec3 scale, float seed) {
+        return saturateMediump(fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed));
+    }
+""".trimIndent()
+
+@Language("glsl")
+val randomFunc3 = """
+    // uniform hash function https://www.shadertoy.com/view/4tXyWN
+    float random3(int bias) {
+        uvec2 x = uvec2(gl_FragCoord) + uint(${PassConstants.eachPassOutputWidth}) * uint(${PassConstants.eachPassOutputHeight}) * (uint(frame) + uint(bias));
+        uvec2 q = 1103515245U * ( (x>>1U) ^ (x.yx   ) );
+        uint  n = 1103515245U * ( (q.x  ) ^ (q.y>>3U) );
+        return float(n) * (1.0/float(0xffffffffU));
     }
 """.trimIndent()
 
@@ -114,11 +129,20 @@ val uniformRandomDirection = """
 
 @Language("glsl")
 val cosineWeightDirection = """
-    vec3 cosineWeightDirection(vec3 normal, float bias) {
-        float r1 = random($randomVec1a, time + bias);
-        float r2 = random($randomVec2b, time + bias);
-        float r = sqrt(r1);
-        float theta = 2.0 * $piVal * r2;
+    #define N_POINTS 32.0
+    vec3 cosineWeightDirection(vec3 normal, int bias) {
+//        float r1 = random3(bias);
+//        float r2 = random3(0);
+//        float r = sqrt(r1);
+//        float theta = 2.0 * $piVal * r2;
+        
+        float i = floor(N_POINTS * random3(0)) + (random3(0) * 0.5);
+        // the Golden angle in radians
+        float theta = i * 2.39996322972865332 + mod(float(frame), 2.0*$piVal);
+        theta = mod(theta, 2.0*$piVal);
+        float r = sqrt(i / N_POINTS); // sqrt pushes points outward to prevent clumping in center of disk
+
+
         float x = r * cos(theta);
         float y = r * sin(theta);
         float z = sqrt(1.0 - x * x - y * y); // unit sphere
@@ -136,6 +160,8 @@ val cosineWeightDirection = """
 
 val randomRayFunc = """
 $randomFunc
+$randomFunc2
+$randomFunc3
 $uniformRandomDirection
 $cosineWeightDirection
 """.trimIndent()
@@ -157,7 +183,7 @@ val intersectCubeFunc = """
 @Language("glsl")
 val cubeNormalFs = """
     vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax) {
-        if (hit.x < cubeMin.x + $eps) return vec3(-1.0, 0.0, 0.0);
+        if(hit.x < cubeMin.x + $eps) return vec3(-1.0, 0.0, 0.0);
         else if (hit.x > cubeMax.x - $eps) return vec3(1.0, 0.0, 0.0);
         else if (hit.y < cubeMin.y + $eps) return vec3(0.0, -1.0, 0.0);
         else if (hit.y > cubeMax.y - $eps) return vec3(0.0, 1.0, 0.0);
@@ -179,31 +205,64 @@ $roomCubeDefine
 """
 
 @Language("glsl")
-const val backgroundColor = "vec3(0.75)"
+val testCubeDefine = """
+    vec3 cubeAMin = vec3(-0.25, -1.0, -0.25);
+    vec3 cubeAMax = vec3(0.25, -0.75, 0.25);
+    
+    vec3 cubeBMin = vec3(0.3, -0.5, -0.25);
+    vec3 cubeBMax = vec3(0.8, -0.25, 0.25);
+    
+    vec3 cubeCMin = vec3(-0.8, 0.0, -0.25);
+    vec3 cubeCMax = vec3(-0.3, 0.25, 0.25);
+""".trimIndent()
 
 @Language("glsl")
-const val lightColor = "vec3(0.5)"
+const val  backgroundColor = "vec3(0.75)"
 
 @Language("glsl")
-const val lightPos = "vec3(0.0, 0.8, -0.5)"
+const val lightColor = "vec3(0.5, 0.5, 0.5)"
 
 @Language("glsl")
-val calcColorFs = """
+const val lightPos = "vec3(-0.5, 0.5, 0.0)"
+
+@Language("glsl")
+val  calcColorFs = """
     vec3 calcColor(vec3 origin, vec3 ray, vec3 light) {
         vec3 colorMask = vec3(1.0);
         vec3 finalColor = vec3(0.0);
-        
-        for (float pass = 0.0; pass < $bounces; pass++) {
+
+        for (int pass = 0; pass < $bounces; pass++) {
             vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);
+            
+            vec2 tCubeA = intersectCube(origin, ray, cubeAMin, cubeAMax);
+            vec2 tCubeB = intersectCube(origin, ray, cubeBMin, cubeBMax);
+            vec2 tCubeC = intersectCube(origin, ray, cubeCMin, cubeCMax);
             
             float t = $infinity;
             if (tRoom.x < tRoom.y) {
                 t = tRoom.y;
             }
+
+            if (tCubeA.x > 1.0 && tCubeA.x < tCubeA.y && tCubeA.x < t) {
+                t = tCubeA.x;
+            }
+            
+            if (tCubeB.x > 1.0 && tCubeB.x < tCubeB.y && tCubeB.x < t) {
+                t = tCubeB.x;
+            }
+            
+            if (tCubeC.x > 1.0 && tCubeC.x < tCubeC.y && tCubeC.x < t) {
+                t = tCubeC.x;
+            }
+            
+            if (t == $infinity) {
+                break;
+            }
             
             vec3 hit = origin + ray * t;
-            vec3 normal = vec3(0);
+            vec3 normal = vec3(0.0);
             vec3 surfaceColor = $backgroundColor;
+            bool hasCubeA = false;
             if (t == tRoom.y) {
                 normal = -normalForCube(hit, roomCubeMin, roomCubeMax);
                 
@@ -214,17 +273,44 @@ val calcColorFs = """
                     surfaceColor = vec3(0.3, 1.0, 0.1);
                 }
                 // create a new diffuse ray
-                ray = cosineWeightDirection(normal, pass);
-            } else if (t == $infinity) {
-                break;
+                ray = normalize(cosineWeightDirection(normal, pass));
             } else {
+                if (t == tCubeA.x && tCubeA.x < tCubeA.y) {
+                    normal = normalForCube(hit, cubeAMin, cubeAMax);
+                }
+                if (t == tCubeB.x && tCubeB.x < tCubeB.y) {
+                    normal = normalForCube(hit, cubeBMin, cubeBMax);
+                }
+                if (t == tCubeC.x && tCubeC.x < tCubeC.y) {
+                    normal = normalForCube(hit, cubeCMin, cubeCMax);
+                }
+                
+                ray = normalize(cosineWeightDirection(normal, pass));
             }
             
-            vec3 lightDir = light - hit;
-            float NdotL = max(0.0, dot(normalize(lightDir), normal));
+            vec3 lightDir = normalize(light - hit);
+            float NdotL = max(dot(normal, lightDir), 0.0);
+
+            float shadow = 1.0;
+            
+            // shadow ray test
+            tCubeA = intersectCube(hit, lightDir, cubeAMin, cubeAMax);
+            if (tCubeA.x > 0.0 && tCubeA.y > 0.0 && tCubeA.x < tCubeA.y) {
+                shadow = 0.0;
+            }
+            
+            tCubeB = intersectCube(hit, lightDir, cubeBMin, cubeBMax);
+            if (tCubeB.x > 0.0 && tCubeB.y > 0.0 && tCubeB.x < tCubeB.y) {
+                shadow = 0.0;
+            }
+            
+            tCubeC = intersectCube(hit, lightDir, cubeCMin, cubeCMax);
+            if (tCubeC.x > 0.0 && tCubeC.y > 0.0 && tCubeC.x < tCubeC.y) {
+                shadow = 0.0;
+            }
             
             colorMask *= surfaceColor;
-            finalColor += colorMask * ($lightColor * NdotL);
+            finalColor += colorMask * ($lightColor * NdotL * shadow);
             
             origin = hit;
         }
@@ -233,20 +319,33 @@ val calcColorFs = """
     }
 """.trimIndent()
 
+@Language("glsl")
+val mathDefine = """
+    #define MEDIUMP_FLT_MAX    65504.0
+    #define saturateMediump(x) min(x, MEDIUMP_FLT_MAX)
+""".trimIndent()
+
+@Language("glsl")
+val highpPrecisionDefine = """
+    precision highp float;
+    precision highp int;
+""".trimIndent()
 
 @Language("glsl")
 val tracerFs = """
     #version 300 es
-    precision highp float;
+    $highpPrecisionDefine
+    
+    $mathDefine
     
     out vec4 FragColor;
     
-    in vec3 WorldPos;
     in vec3 traceRay;
     in vec3 eyePos;
     
     uniform float weight; // current render output weight mix with last pass output
     uniform float time; // tick to create diffuse/glossy ray
+    uniform int frame;
     
     uniform sampler2D previous; // last pass output
     
@@ -254,14 +353,18 @@ val tracerFs = """
         
     $cornellBoxFunc
     
+    $testCubeDefine
+    
     $calcColorFs
 
     
     void main() {
-        vec3 lightRay = $lightPos + uniformRandomDirection() * 0.1;
+        float lightArea = 4.0 * $piVal * 0.2 * 0.2;
+        vec3 lightRay = normalize($lightPos + uniformRandomDirection() * lightArea);
         vec3 color = calcColor(eyePos, traceRay, lightRay);
         vec2 coord = vec2(gl_FragCoord.x / ${PassConstants.eachPassOutputWidth}, gl_FragCoord.y / ${PassConstants.eachPassOutputHeight});
         vec3 previousColor = texture(previous, coord).rgb;
         FragColor = vec4(mix(color, previousColor, weight), 1.0);
+//        FragColor = vec4(color, 1.0);
     }
 """.trimIndent()

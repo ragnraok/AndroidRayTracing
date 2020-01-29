@@ -32,7 +32,7 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
     private var outputShader: Shader? = null
     private var outputRenderer: QuadRenderer? = null
 
-    private val camera = Camera(Vec3(0.0, 0.0, 2.5))
+    private val camera = Camera(Vec3(0.0, 0.0, 3.0))
 
     private val textures = IntArray(2)
 
@@ -48,9 +48,6 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
         viewport(width, height)
         this.width = width
         this.height = height
-
-        PassConstants.eachPassOutputWidth = width.toDouble()
-        PassConstants.eachPassOutputHeight = height.toDouble()
 
         initRenderer()
     }
@@ -76,7 +73,7 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
 
     private fun renderFrame() {
         // render ray tracing scene
-        val projection = glm.perspective(glm.radians(camera.zoom), width/height.toFloat(), 0.1f, 1000.0f)
+        val projection = glm.perspective(glm.radians(camera.zoom), (PassConstants.eachPassOutputWidth/PassConstants.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
         val view = camera.lookAt(Vec3(0))
 
         pingRenderer?.render(projection, view, pongRenderer?.outputTex?:0, renderCount)
@@ -89,6 +86,7 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
         val outputTex = pongRenderer?.outputTex ?: 0
 
         if (outputTex > 0) {
+            viewport(width, height)
             // render output
             outputShader?.apply {
                 enable()

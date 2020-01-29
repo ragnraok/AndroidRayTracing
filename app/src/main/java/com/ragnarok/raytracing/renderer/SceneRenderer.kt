@@ -31,9 +31,6 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
         if (outputTex > 0) {
             fbo = genFBO()
             rbo = genRBO()
-//            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, fbo)
-//
-//            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
         }
     }
     /**
@@ -78,6 +75,8 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
             setVec3("ray10", getEyeRay(modelViewProjection, Vec2(1, -1), eye))
             setVec3("ray11", getEyeRay(modelViewProjection, Vec2(1, 1), eye))
 
+            setInt("frame", count)
+
 
             val weight = count / (count + 1).toFloat()
             setFloat("weight", weight)
@@ -86,11 +85,11 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
             if (startTime < 0) {
                 startTime = System.currentTimeMillis()
             }
-            time = (System.currentTimeMillis() - time) / 1000.0
+            time = (System.currentTimeMillis() - time) / 10.0
 
             setFloat("time", time.toFloat())
 
-            Log.i(TAG, "render weight:$weight")
+            Log.i(TAG, "render weight:$weight, time:$time, count:$count")
 
             quadRenderer?.render()
         }
@@ -100,7 +99,8 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
     }
 
     private fun getEyeRay(modelViewProjection: Mat4, screenPos: Vec2, eyeCenter: Vec3): Vec3 {
-        val randomVec = Vec3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1) * (1 / max(PassConstants.eachPassOutputHeight, PassConstants.eachPassOutputWidth))
+        val randomVec = Vec3(Math.random(), Math.random(), Math.random()) * (1 / max(PassConstants.eachPassOutputHeight, PassConstants.eachPassOutputWidth))
+        Log.i(TAG, "randomVec:$randomVec, width:${PassConstants.eachPassOutputWidth}, height:${PassConstants.eachPassOutputHeight}")
         val jitterMVP = glm.translate(modelViewProjection, randomVec).inverse()
         val inv = jitterMVP * Vec4(screenPos.x, screenPos.y, 0, 1)
         return inv.div(inv.w).toVec3() - eyeCenter

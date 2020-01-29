@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleRenderMsg(msg: Message) {
         if (msg.what == 1000 && renderLoopStart) {
             surfaceView.requestRender()
-            handler.sendEmptyMessageDelayed(1000, 2000)
+            handler.sendEmptyMessageDelayed(1000, 50)
         }
     }
 
