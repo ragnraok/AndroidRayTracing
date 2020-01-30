@@ -172,9 +172,9 @@ $cosineWeightDirection
 //// cornell box scene
 @Language("glsl")
 val intersectCubeFunc = """
-    vec2 intersectCube(vec3 origin, vec3 ray, vec3 cubeMin, vec3 cubeMax) {
-        vec3 tMin = (cubeMin - origin) / ray;
-        vec3 tMax = (cubeMax - origin) / ray;
+    vec2 intersectCube(Ray ray, vec3 cubeMin, vec3 cubeMax) {
+        vec3 tMin = (cubeMin - ray.origin) / ray.direction;
+        vec3 tMax = (cubeMax - ray.origin) / ray.direction;
         vec3 t1 = min(tMin, tMax);
         vec3 t2 = max(tMin, tMax);
         float tNear = max(max(t1.x, t1.y), t1.z);
@@ -215,8 +215,8 @@ val testCubeDefine = """
     vec3 cubeBMin = vec3(0.5, -1.0, -0.5);
     vec3 cubeBMax = vec3(1.0, -0.25, -0.25);
     
-    vec3 cubeCMin = vec3(-1.0, -1.0, -0.5);
-    vec3 cubeCMax = vec3(-0.5, -0.25, 0.0);
+    vec3 cubeCMin = vec3(-1.0, -1.0, 0.0);
+    vec3 cubeCMax = vec3(-0.5, -0.25, 0.5);
 """.trimIndent()
 
 @Language("glsl")
@@ -230,14 +230,14 @@ const val lightPos = "vec3(1.0, 1.0, 1.0)"
 
 @Language("glsl")
 val diffuseRay = """
-    ray = normalize(cosineWeightDirection(normal, pass));
+    ray.direction = normalize(cosineWeightDirection(normal, pass));
 """.trimIndent()
 
 @Language("glsl")
 val specularRay = """
-    ray = normalize(reflect(ray, normal));
+    ray.direction = normalize(reflect(ray.direction, normal));
     vec3 reflectedLight = normalize(reflect(lightDir, normal));
-    vec3 viewDir = normalize(origin - hit);
+    vec3 viewDir = normalize(ray.origin - hit);
     specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
     specular = 2.0 * specular;
 """.trimIndent()
@@ -247,23 +247,23 @@ val glossyRay = """
     float glossiness = ${PassConstants.glossiness};
     ray = normalize(reflect(ray, normal)) + uniformRandomDirection() * glossiness;
     vec3 reflectedLight = normalize(reflect(lightDir, normal));
-    vec3 viewDir = normalize(origin - hit);
+    vec3 viewDir = normalize(ray.origin - hit);
     specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
     specular = 2.0 * specular;
 """.trimIndent()
 
 @Language("glsl")
 val  calcColorFs = """
-    vec3 calcColor(vec3 origin, vec3 ray, vec3 light) {
+    vec3 calcColor(Ray ray, vec3 light) {
         vec3 colorMask = vec3(1.0);
         vec3 finalColor = vec3(0.0);
 
         for (int pass = 0; pass < $bounces; pass++) {
-            vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);
+            vec2 tRoom = intersectCube(ray, roomCubeMin, roomCubeMax);
             
-            vec2 tCubeA = intersectCube(origin, ray, cubeAMin, cubeAMax);
-            vec2 tCubeB = intersectCube(origin, ray, cubeBMin, cubeBMax);
-            vec2 tCubeC = intersectCube(origin, ray, cubeCMin, cubeCMax);
+            vec2 tCubeA = intersectCube(ray, cubeAMin, cubeAMax);
+            vec2 tCubeB = intersectCube(ray, cubeBMin, cubeBMax);
+            vec2 tCubeC = intersectCube(ray, cubeCMin, cubeCMax);
             
             float t = $infinity;
             if (tRoom.x < tRoom.y) {
@@ -286,7 +286,7 @@ val  calcColorFs = """
                 break;
             }
             
-            vec3 hit = origin + ray * t;
+            vec3 hit = pointAt(ray, t);
             vec3 normal = vec3(0.0);
             vec3 surfaceColor = $backgroundColor;
             
@@ -305,7 +305,7 @@ val  calcColorFs = """
                     surfaceColor = vec3(0.3, 1.0, 0.1);
                 }
                 // create a new diffuse ray
-                ray = normalize(cosineWeightDirection(normal, pass));
+                ray.direction = normalize(cosineWeightDirection(normal, pass));
             } else {
                 if (t == tCubeA.x && tCubeA.x < tCubeA.y) {
                     normal = normalForCube(hit, cubeAMin, cubeAMax);
@@ -325,17 +325,18 @@ val  calcColorFs = """
 
             
             // shadow ray test
-            tCubeA = intersectCube(hit, lightDir, cubeAMin, cubeAMax);
+            Ray shadowRay = Ray(hit, lightDir);
+            tCubeA = intersectCube(shadowRay, cubeAMin, cubeAMax);
             if (tCubeA.x > 0.0 && tCubeA.y > 0.0 && tCubeA.x < tCubeA.y) {
                 shadow = 0.0;
             }
             
-            tCubeB = intersectCube(hit, lightDir, cubeBMin, cubeBMax);
+            tCubeB = intersectCube(shadowRay, cubeBMin, cubeBMax);
             if (tCubeB.x > 0.0 && tCubeB.y > 0.0 && tCubeB.x < tCubeB.y) {
                 shadow = 0.0;
             }
 
-            tCubeC = intersectCube(hit, lightDir, cubeCMin, cubeCMax);
+            tCubeC = intersectCube(shadowRay, cubeCMin, cubeCMax);
             if (tCubeC.x > 0.0 && tCubeC.y > 0.0 && tCubeC.x < tCubeC.y) {
                 shadow = 0.0;
             }
@@ -344,7 +345,7 @@ val  calcColorFs = """
             finalColor += colorMask * ($lightColor * NdotL * shadow);
             finalColor += colorMask * specular * shadow;
             
-            origin = hit;
+            ray.origin = hit;
         }
         
         return finalColor;
@@ -364,11 +365,24 @@ val highpPrecisionDefine = """
 """.trimIndent()
 
 @Language("glsl")
+val rayDefine = """
+    struct Ray {
+        vec3 origin;
+        vec3 direction;
+    };
+    vec3 pointAt(Ray ray, float t) {
+        return ray.origin + ray.direction * t;
+    }
+""".trimIndent()
+
+@Language("glsl")
 val tracerFs = """
     #version 300 es
     $highpPrecisionDefine
     
     $mathDefine
+    
+    $rayDefine
     
     out vec4 FragColor;
     
@@ -393,7 +407,8 @@ val tracerFs = """
     void main() {
         float lightArea = 4.0 * $piVal * 0.3 * 0.3;
         vec3 lightRay = normalize($lightPos + uniformRandomDirection() * lightArea);
-        vec3 color = calcColor(eyePos, traceRay, lightRay);
+        Ray ray = Ray(eyePos, traceRay);
+        vec3 color = calcColor(ray, lightRay);
         vec2 coord = vec2(gl_FragCoord.x / ${PassConstants.eachPassOutputWidth}, gl_FragCoord.y / ${PassConstants.eachPassOutputHeight});
         vec3 previousColor = texture(previous, coord).rgb;
         FragColor = vec4(mix(color, previousColor, weight), 1.0);
