@@ -9,7 +9,10 @@ const val infinity = 10000.0
 object PassConstants {
     var eachPassOutputWidth = 1024.0
     var eachPassOutputHeight = 1024.0
+    var glossiness = 0.5
 }
+
+//TODO: refactor code, better data structure for objects organization
 
 @Language("glsl")
 val outputVs = """
@@ -116,8 +119,8 @@ const val randomVec3b = "vec3(63.7264, 10.873, 623.6736)"
 @Language("glsl")
 val uniformRandomDirection = """
     vec3 uniformRandomDirection() {
-        float r1 = random($randomVec1a, time);
-        float r2 = random($randomVec2b, time);
+        float r1 = random3(frame);
+        float r2 = random3(0);
         
         float z = 1.0 - 2.0 * r2;
         float phi = 2.0 * $piVal * r1;
@@ -131,16 +134,16 @@ val uniformRandomDirection = """
 val cosineWeightDirection = """
     #define N_POINTS 32.0
     vec3 cosineWeightDirection(vec3 normal, int bias) {
-//        float r1 = random3(bias);
-//        float r2 = random3(0);
-//        float r = sqrt(r1);
-//        float theta = 2.0 * $piVal * r2;
+        float r1 = random3(bias);
+        float r2 = random3(0);
+        float r = sqrt(r1);
+        float theta = 2.0 * $piVal * r2;
         
-        float i = floor(N_POINTS * random3(0)) + (random3(0) * 0.5);
-        // the Golden angle in radians
-        float theta = i * 2.39996322972865332 + mod(float(frame), 2.0*$piVal);
-        theta = mod(theta, 2.0*$piVal);
-        float r = sqrt(i / N_POINTS); // sqrt pushes points outward to prevent clumping in center of disk
+//        float i = floor(N_POINTS * random3(0)) + (random3(0) * 0.5);
+//        // the Golden angle in radians
+//        float theta = i * 2.39996322972865332 + mod(float(frame), 2.0*$piVal);
+//        theta = mod(theta, 2.0*$piVal);
+//        float r = sqrt(i / N_POINTS); // sqrt pushes points outward to prevent clumping in center of disk
 
 
         float x = r * cos(theta);
@@ -226,6 +229,30 @@ const val lightColor = "vec3(0.75)"
 const val lightPos = "vec3(1.0, 1.0, 1.0)"
 
 @Language("glsl")
+val diffuseRay = """
+    ray = normalize(cosineWeightDirection(normal, pass));
+""".trimIndent()
+
+@Language("glsl")
+val specularRay = """
+    ray = normalize(reflect(ray, normal));
+    vec3 reflectedLight = normalize(reflect(lightDir, normal));
+    vec3 viewDir = normalize(origin - hit);
+    specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
+    specular = 2.0 * specular;
+""".trimIndent()
+
+@Language("glsl")
+val glossyRay = """
+    float glossiness = ${PassConstants.glossiness};
+    ray = normalize(reflect(ray, normal)) + uniformRandomDirection() * glossiness;
+    vec3 reflectedLight = normalize(reflect(lightDir, normal));
+    vec3 viewDir = normalize(origin - hit);
+    specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
+    specular = 2.0 * specular;
+""".trimIndent()
+
+@Language("glsl")
 val  calcColorFs = """
     vec3 calcColor(vec3 origin, vec3 ray, vec3 light) {
         vec3 colorMask = vec3(1.0);
@@ -290,15 +317,8 @@ val  calcColorFs = """
                     normal = normalForCube(hit, cubeCMin, cubeCMax);
                 }
 
-                // diffuse
-//                ray = normalize(cosineWeightDirection(normal, pass));
+                $specularRay
                 
-                // specular
-                ray = normalize(reflect(ray, normal));
-                vec3 reflectedLight = normalize(reflect(lightDir, normal));
-                vec3 viewDir = normalize(origin - hit);
-                specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
-                specular = 2.0 * specular;
             }
             
             float NdotL = max(dot(normal, lightDir), 0.0);
