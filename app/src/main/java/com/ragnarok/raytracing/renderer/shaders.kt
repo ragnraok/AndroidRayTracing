@@ -206,24 +206,24 @@ $roomCubeDefine
 
 @Language("glsl")
 val testCubeDefine = """
-    vec3 cubeAMin = vec3(-0.25, -1.0, -0.25);
-    vec3 cubeAMax = vec3(0.25, -0.75, 0.25);
+    vec3 cubeAMin = vec3(-0.25, -1.0, -0.5);
+    vec3 cubeAMax = vec3(0.25, 0.5, -0.25);
     
-    vec3 cubeBMin = vec3(0.3, -0.5, -0.25);
-    vec3 cubeBMax = vec3(0.8, -0.25, 0.25);
+    vec3 cubeBMin = vec3(0.5, -1.0, -0.5);
+    vec3 cubeBMax = vec3(1.0, -0.25, -0.25);
     
-    vec3 cubeCMin = vec3(-0.8, 0.0, -0.25);
-    vec3 cubeCMax = vec3(-0.3, 0.25, 0.25);
+    vec3 cubeCMin = vec3(-1.0, -1.0, -0.5);
+    vec3 cubeCMax = vec3(-0.5, -0.25, 0.0);
 """.trimIndent()
 
 @Language("glsl")
-const val  backgroundColor = "vec3(0.75)"
+const val  backgroundColor = "vec3(0.6)"
 
 @Language("glsl")
-const val lightColor = "vec3(0.5, 0.5, 0.5)"
+const val lightColor = "vec3(0.75)"
 
 @Language("glsl")
-const val lightPos = "vec3(-0.5, 0.5, 0.0)"
+const val lightPos = "vec3(1.0, 1.0, 1.0)"
 
 @Language("glsl")
 val  calcColorFs = """
@@ -250,7 +250,7 @@ val  calcColorFs = """
             if (tCubeB.x > 1.0 && tCubeB.x < tCubeB.y && tCubeB.x < t) {
                 t = tCubeB.x;
             }
-            
+
             if (tCubeC.x > 1.0 && tCubeC.x < tCubeC.y && tCubeC.x < t) {
                 t = tCubeC.x;
             }
@@ -262,7 +262,12 @@ val  calcColorFs = """
             vec3 hit = origin + ray * t;
             vec3 normal = vec3(0.0);
             vec3 surfaceColor = $backgroundColor;
-            bool hasCubeA = false;
+            
+            float shadow = 1.0;
+            float specular = 0.0;
+            
+            vec3 lightDir = normalize(light - hit);
+            
             if (t == tRoom.y) {
                 normal = -normalForCube(hit, roomCubeMin, roomCubeMax);
                 
@@ -284,14 +289,20 @@ val  calcColorFs = """
                 if (t == tCubeC.x && tCubeC.x < tCubeC.y) {
                     normal = normalForCube(hit, cubeCMin, cubeCMax);
                 }
+
+                // diffuse
+//                ray = normalize(cosineWeightDirection(normal, pass));
                 
-                ray = normalize(cosineWeightDirection(normal, pass));
+                // specular
+                ray = normalize(reflect(ray, normal));
+                vec3 reflectedLight = normalize(reflect(lightDir, normal));
+                vec3 viewDir = normalize(origin - hit);
+                specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
+                specular = 2.0 * specular;
             }
             
-            vec3 lightDir = normalize(light - hit);
             float NdotL = max(dot(normal, lightDir), 0.0);
 
-            float shadow = 1.0;
             
             // shadow ray test
             tCubeA = intersectCube(hit, lightDir, cubeAMin, cubeAMax);
@@ -303,7 +314,7 @@ val  calcColorFs = """
             if (tCubeB.x > 0.0 && tCubeB.y > 0.0 && tCubeB.x < tCubeB.y) {
                 shadow = 0.0;
             }
-            
+
             tCubeC = intersectCube(hit, lightDir, cubeCMin, cubeCMax);
             if (tCubeC.x > 0.0 && tCubeC.y > 0.0 && tCubeC.x < tCubeC.y) {
                 shadow = 0.0;
@@ -311,6 +322,7 @@ val  calcColorFs = """
             
             colorMask *= surfaceColor;
             finalColor += colorMask * ($lightColor * NdotL * shadow);
+            finalColor += colorMask * specular * shadow;
             
             origin = hit;
         }
@@ -359,7 +371,7 @@ val tracerFs = """
 
     
     void main() {
-        float lightArea = 4.0 * $piVal * 0.2 * 0.2;
+        float lightArea = 4.0 * $piVal * 0.3 * 0.3;
         vec3 lightRay = normalize($lightPos + uniformRandomDirection() * lightArea);
         vec3 color = calcColor(eyePos, traceRay, lightRay);
         vec2 coord = vec2(gl_FragCoord.x / ${PassConstants.eachPassOutputWidth}, gl_FragCoord.y / ${PassConstants.eachPassOutputHeight});

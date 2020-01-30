@@ -74,7 +74,7 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
     private fun renderFrame() {
         // render ray tracing scene
         val projection = glm.perspective(glm.radians(camera.zoom), (PassConstants.eachPassOutputWidth/PassConstants.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
-        val view = camera.lookAt(Vec3(0))
+        var view = camera.lookAt(Vec3(0))
 
         pingRenderer?.render(projection, view, pongRenderer?.outputTex?:0, renderCount)
         pongRenderer?.render(projection, view, pingRenderer?.outputTex?:0, renderCount)
