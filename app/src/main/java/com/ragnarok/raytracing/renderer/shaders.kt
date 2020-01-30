@@ -9,7 +9,7 @@ const val infinity = 10000.0
 object PassConstants {
     var eachPassOutputWidth = 1024.0
     var eachPassOutputHeight = 1024.0
-    var glossiness = 0.5
+    var glossiness = 0.1
 }
 
 //TODO: refactor code, better data structure for objects organization
@@ -245,7 +245,7 @@ val specularRay = """
 @Language("glsl")
 val glossyRay = """
     float glossiness = ${PassConstants.glossiness};
-    ray = normalize(reflect(ray, normal)) + uniformRandomDirection() * glossiness;
+    ray.direction = normalize(reflect(ray.direction, normal)) + uniformRandomDirection() * glossiness;
     vec3 reflectedLight = normalize(reflect(lightDir, normal));
     vec3 viewDir = normalize(ray.origin - hit);
     specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
@@ -309,16 +309,14 @@ val  calcColorFs = """
             } else {
                 if (t == tCubeA.x && tCubeA.x < tCubeA.y) {
                     normal = normalForCube(hit, cubeAMin, cubeAMax);
-                }
-                if (t == tCubeB.x && tCubeB.x < tCubeB.y) {
+                    $glossyRay                      
+                } else if (t == tCubeB.x && tCubeB.x < tCubeB.y) {
                     normal = normalForCube(hit, cubeBMin, cubeBMax);
-                }
-                if (t == tCubeC.x && tCubeC.x < tCubeC.y) {
+                    $specularRay
+                } else if (t == tCubeC.x && tCubeC.x < tCubeC.y) {
                     normal = normalForCube(hit, cubeCMin, cubeCMax);
+                    $diffuseRay
                 }
-
-                $specularRay
-                
             }
             
             float NdotL = max(dot(normal, lightDir), 0.0);
@@ -373,6 +371,14 @@ val rayDefine = """
     vec3 pointAt(Ray ray, float t) {
         return ray.origin + ray.direction * t;
     }
+""".trimIndent()
+
+@Language("glsl")
+val intersectDefine = """
+    struct Intersect {
+        float t;
+        vec3 normal;
+    };
 """.trimIndent()
 
 @Language("glsl")
