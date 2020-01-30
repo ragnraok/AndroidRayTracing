@@ -134,16 +134,17 @@ val uniformRandomDirection = """
 val cosineWeightDirection = """
     #define N_POINTS 32.0
     vec3 cosineWeightDirection(vec3 normal, int bias) {
-        float r1 = random3(bias);
-        float r2 = random3(0);
-        float r = sqrt(r1);
-        float theta = 2.0 * $piVal * r2;
+//        float r1 = random3(bias);
+//        float r2 = random3(0);
+//        float r = sqrt(r2);
+//        float theta = 2.0 * $piVal * r1;
         
-//        float i = floor(N_POINTS * random3(0)) + (random3(0) * 0.5);
-//        // the Golden angle in radians
-//        float theta = i * 2.39996322972865332 + mod(float(frame), 2.0*$piVal);
-//        theta = mod(theta, 2.0*$piVal);
-//        float r = sqrt(i / N_POINTS); // sqrt pushes points outward to prevent clumping in center of disk
+        // why this one better??
+        float i = floor(N_POINTS * random3(0)) + (random3(0) * 0.5);
+        // the Golden angle in radians
+        float theta = i * 2.39996322972865332 + mod(float(frame), 2.0*$piVal);
+        theta = mod(theta, 2.0*$piVal);
+        float r = sqrt(i / N_POINTS); // sqrt pushes points outward to prevent clumping in center of disk
 
 
         float x = r * cos(theta);
@@ -152,11 +153,11 @@ val cosineWeightDirection = """
         // calc new ortho normal basic
         vec3 s,t;
         if (abs(normal.x) < 0.5) {
-            s = cross(normal, vec3(1, 0, 0));
+            s = normalize(cross(normal, vec3(1, 0, 0)));
         } else {
-            s = cross(normal, vec3(0, 1, 0));
+            s = normalize(cross(normal, vec3(0, 1, 0)));
         }
-        t = cross(normal, s);
+        t = normalize(cross(normal, s));
         return x * s + y * t + z * normal;
     }
 """.trimIndent()
@@ -226,7 +227,7 @@ const val  backgroundColor = "vec3(0.6)"
 const val lightColor = "vec3(0.75)"
 
 @Language("glsl")
-const val lightPos = "vec3(1.0, 1.0, 1.0)"
+const val lightPos = "vec3(0.0, 1.0, 1.0)"
 
 @Language("glsl")
 val diffuseRay = """
@@ -238,7 +239,7 @@ val specularRay = """
     ray.direction = normalize(reflect(ray.direction, normal));
     vec3 reflectedLight = normalize(reflect(lightDir, normal));
     vec3 viewDir = normalize(ray.origin - hit);
-    specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
+    specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 50.0);
     specular = 2.0 * specular;
 """.trimIndent()
 
@@ -418,6 +419,5 @@ val tracerFs = """
         vec2 coord = vec2(gl_FragCoord.x / ${PassConstants.eachPassOutputWidth}, gl_FragCoord.y / ${PassConstants.eachPassOutputHeight});
         vec3 previousColor = texture(previous, coord).rgb;
         FragColor = vec4(mix(color, previousColor, weight), 1.0);
-//        FragColor = vec4(color, 1.0);
     }
 """.trimIndent()
