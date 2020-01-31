@@ -13,6 +13,7 @@ object PassConstants {
 }
 
 //TODO: refactor code, better data structure for objects organization
+//TODO: pbr materials
 
 @Language("glsl")
 val outputVs = """
@@ -170,7 +171,7 @@ $uniformRandomDirection
 $cosineWeightDirection
 """.trimIndent()
 
-//// cornell box scene
+//// cube related define
 @Language("glsl")
 val intersectCubeFunc = """
     vec2 intersectCube(Ray ray, vec3 cubeMin, vec3 cubeMax) {
@@ -185,7 +186,7 @@ val intersectCubeFunc = """
 """.trimIndent()
 
 @Language("glsl")
-val cubeNormalFs = """
+val cubeNormalFunc = """
     vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax) {
         if(hit.x < cubeMin.x + $eps) return vec3(-1.0, 0.0, 0.0);
         else if (hit.x > cubeMax.x - $eps) return vec3(1.0, 0.0, 0.0);
@@ -202,12 +203,6 @@ val roomCubeDefine = """
     vec3 roomCubeMax = vec3(1.0, 1.0, 1.0);
 """.trimIndent()
 
-val cornellBoxFunc = """
-$intersectCubeFunc
-$cubeNormalFs
-$roomCubeDefine
-"""
-
 @Language("glsl")
 val testCubeDefine = """
     vec3 cubeAMin = vec3(-0.25, -1.0, -0.5);
@@ -216,8 +211,52 @@ val testCubeDefine = """
     vec3 cubeBMin = vec3(0.5, -1.0, -0.5);
     vec3 cubeBMax = vec3(1.0, -0.25, -0.25);
     
-    vec3 cubeCMin = vec3(-1.0, -1.0, 0.0);
-    vec3 cubeCMax = vec3(-0.5, -0.25, 0.5);
+    vec3 cubeCMin = vec3(-1.0, -1.0, -0.25);
+    vec3 cubeCMax = vec3(-0.5, -0.25, 0.0);
+""".trimIndent()
+
+val cubeDefines = """
+$intersectCubeFunc
+$cubeNormalFunc
+$roomCubeDefine
+$testCubeDefine
+"""
+
+/// sphere related define
+@Language("glsl")
+val intersectSphereFunc = """
+    float intersectSphere(Ray ray, vec3 sphereCenter, float sphereRadius) {
+        vec3 toSphere = ray.origin - sphereCenter;
+        float a = dot(ray.direction, ray.direction);
+        float b = 2.0 * dot(toSphere, ray.direction);
+        float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;
+        float discriminant = b*b - 4.0*a*c;
+        if(discriminant > 0.0) {
+            float t = (-b - sqrt(discriminant)) / (2.0 * a);
+            if(t > 0.0) return t;
+        }
+        return $infinity;
+    }
+""".trimIndent()
+
+@Language("glsl")
+val sphereNormalFunc = """
+    vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {
+        return (hit - sphereCenter) / sphereRadius;
+    }
+""".trimIndent()
+
+
+@Language("glsl")
+val testSphereDefine = """
+    vec3 sphereACenter = vec3(0.25, -0.75, 0.5);
+    float sphereARadius = 0.25;
+""".trimIndent()
+
+val sphereDefines = """
+    $intersectSphereFunc
+    $sphereNormalFunc
+    $testSphereDefine
 """.trimIndent()
 
 @Language("glsl")
@@ -227,7 +266,7 @@ const val  backgroundColor = "vec3(0.6)"
 const val lightColor = "vec3(0.75)"
 
 @Language("glsl")
-const val lightPos = "vec3(0.0, 1.0, 1.0)"
+const val lightPos = "vec3(0.5, 0.75, 1.0)"
 
 @Language("glsl")
 val diffuseRay = """
@@ -266,6 +305,8 @@ val  calcColorFs = """
             vec2 tCubeB = intersectCube(ray, cubeBMin, cubeBMax);
             vec2 tCubeC = intersectCube(ray, cubeCMin, cubeCMax);
             
+            float tSphereA = intersectSphere(ray, sphereACenter, sphereARadius);
+            
             float t = $infinity;
             if (tRoom.x < tRoom.y) {
                 t = tRoom.y;
@@ -281,6 +322,10 @@ val  calcColorFs = """
 
             if (tCubeC.x > 1.0 && tCubeC.x < tCubeC.y && tCubeC.x < t) {
                 t = tCubeC.x;
+            }
+            
+            if (tSphereA > 0.0 && tSphereA < t) {
+                t = tSphereA;
             }
             
             if (t == $infinity) {
@@ -310,13 +355,16 @@ val  calcColorFs = """
             } else {
                 if (t == tCubeA.x && tCubeA.x < tCubeA.y) {
                     normal = normalForCube(hit, cubeAMin, cubeAMax);
-                    $glossyRay                      
+                    $specularRay
                 } else if (t == tCubeB.x && tCubeB.x < tCubeB.y) {
                     normal = normalForCube(hit, cubeBMin, cubeBMax);
-                    $specularRay
+                    $glossyRay                         
                 } else if (t == tCubeC.x && tCubeC.x < tCubeC.y) {
                     normal = normalForCube(hit, cubeCMin, cubeCMax);
                     $diffuseRay
+                } else if (t == tSphereA) {
+                    normal = normalForSphere(hit, sphereACenter, sphereARadius);
+                    $specularRay
                 }
             }
             
@@ -337,6 +385,11 @@ val  calcColorFs = """
 
             tCubeC = intersectCube(shadowRay, cubeCMin, cubeCMax);
             if (tCubeC.x > 0.0 && tCubeC.y > 0.0 && tCubeC.x < tCubeC.y) {
+                shadow = 0.0;
+            }
+            
+            tSphereA = intersectSphere(shadowRay, sphereACenter, sphereARadius);
+            if (tSphereA < 1.0) {
                 shadow = 0.0;
             }
             
@@ -404,9 +457,9 @@ val tracerFs = """
     
     $randomRayFunc
         
-    $cornellBoxFunc
+    $cubeDefines
     
-    $testCubeDefine
+    $sphereDefines
     
     $calcColorFs
 
