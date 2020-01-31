@@ -7,6 +7,7 @@ import android.os.Looper
 import android.os.Message
 import android.view.Window
 import android.view.WindowManager
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.ragnarok.raytracing.R
 import com.ragnarok.raytracing.renderer.RayTracingRenderer
@@ -14,6 +15,7 @@ import com.ragnarok.raytracing.renderer.RayTracingRenderer
 class MainActivity : AppCompatActivity() {
 
     private lateinit var surfaceView: GLSurfaceView
+    private lateinit var infoTextView: TextView
 
     private val renderer = RayTracingRenderer()
 
@@ -32,6 +34,7 @@ class MainActivity : AppCompatActivity() {
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
         surfaceView = findViewById(R.id.surfaceview)
+        infoTextView = findViewById(R.id.info_tv)
 
         surfaceView.setEGLContextClientVersion(3)
         surfaceView.setRenderer(renderer)
@@ -41,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleRenderMsg(msg: Message) {
         if (msg.what == 1000 && renderLoopStart) {
             surfaceView.requestRender()
+            infoTextView.text = "Sample:${renderer.frameCount()}"
             handler.sendEmptyMessageDelayed(1000, 50)
         }
     }

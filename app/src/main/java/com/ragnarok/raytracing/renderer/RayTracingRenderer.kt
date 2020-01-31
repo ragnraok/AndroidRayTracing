@@ -2,9 +2,8 @@ package com.ragnarok.raytracing.renderer
 
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
+import com.ragnarok.raytracing.glsl.PassVariable
 import com.ragnarok.raytracing.model.Camera
 import com.ragnarok.raytracing.primitive.QuadRenderer
 import glm_.glm
@@ -73,7 +72,7 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
 
     private fun renderFrame() {
         // render ray tracing scene
-        val projection = glm.perspective(glm.radians(camera.zoom), (PassConstants.eachPassOutputWidth/PassConstants.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
+        val projection = glm.perspective(glm.radians(camera.zoom), (PassVariable.eachPassOutputWidth/PassVariable.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
         var view = camera.lookAt(Vec3(0))
 
         pingRenderer?.render(projection, view, pongRenderer?.outputTex?:0, renderCount)
@@ -100,4 +99,5 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
         }
     }
 
+    fun frameCount() = renderCount
 }

@@ -2,6 +2,7 @@ package com.ragnarok.raytracing.renderer
 
 import android.opengl.GLES30
 import android.util.Log
+import com.ragnarok.raytracing.glsl.PassVariable
 import com.ragnarok.raytracing.model.Camera
 import com.ragnarok.raytracing.primitive.QuadRenderer
 import glm_.glm
@@ -39,7 +40,7 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
     fun render(projection: Mat4, view: Mat4, previewOutput: Int, count: Int = 0) {
         if (fbo != 0) {
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, outputTex)
-            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGB16F, PassConstants.eachPassOutputWidth.toInt(), PassConstants.eachPassOutputHeight.toInt(),
+            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGB16F, PassVariable.eachPassOutputWidth.toInt(), PassVariable.eachPassOutputHeight.toInt(),
                 0, GLES30.GL_RGB, GLES30.GL_FLOAT, null)
             setup2DTexParam()
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
@@ -47,11 +48,11 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, fbo)
 
             GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, rbo)
-            GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_DEPTH_COMPONENT24, PassConstants.eachPassOutputWidth.toInt(), PassConstants.eachPassOutputHeight.toInt())
+            GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_DEPTH_COMPONENT24, PassVariable.eachPassOutputWidth.toInt(), PassVariable.eachPassOutputHeight.toInt())
 
             GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0, GLES30.GL_TEXTURE_2D, outputTex, 0)
 
-            viewport(PassConstants.eachPassOutputWidth.toInt(), PassConstants.eachPassOutputHeight.toInt())
+            viewport(PassVariable.eachPassOutputWidth.toInt(), PassVariable.eachPassOutputHeight.toInt())
             clearGL()
         }
 
@@ -99,8 +100,8 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
     }
 
     private fun getEyeRay(modelViewProjection: Mat4, screenPos: Vec2, eyeCenter: Vec3): Vec3 {
-        val randomVec = Vec3(Math.random(), Math.random(), Math.random()) * (1 / max(PassConstants.eachPassOutputHeight, PassConstants.eachPassOutputWidth))
-        Log.i(TAG, "randomVec:$randomVec, width:${PassConstants.eachPassOutputWidth}, height:${PassConstants.eachPassOutputHeight}")
+        val randomVec = Vec3(Math.random(), Math.random(), Math.random()) * (1 / max(PassVariable.eachPassOutputHeight, PassVariable.eachPassOutputWidth))
+        Log.i(TAG, "randomVec:$randomVec, width:${PassVariable.eachPassOutputWidth}, height:${PassVariable.eachPassOutputHeight}")
         val jitterMVP = glm.translate(modelViewProjection, randomVec).inverse()
         val inv = jitterMVP * Vec4(screenPos.x, screenPos.y, 0, 1)
         return inv.div(inv.w).toVec3() - eyeCenter

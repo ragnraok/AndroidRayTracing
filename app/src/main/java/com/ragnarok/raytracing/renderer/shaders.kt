@@ -1,16 +1,7 @@
 package com.ragnarok.raytracing.renderer
 
+import com.ragnarok.raytracing.glsl.PassVariable
 import org.intellij.lang.annotations.Language
-
-const val eps = 0.0001
-const val bounces = 5
-const val infinity = 10000.0
-
-object PassConstants {
-    var eachPassOutputWidth = 1024.0
-    var eachPassOutputHeight = 1024.0
-    var glossiness = 0.1
-}
 
 //TODO: refactor code, better data structure for objects organization
 //TODO: rotate test
@@ -95,15 +86,12 @@ val randomFunc2 = """
 val randomFunc3 = """
     // uniform hash function https://www.shadertoy.com/view/4tXyWN
     float random3(int bias) {
-        uvec2 x = uvec2(gl_FragCoord) + uint(${PassConstants.eachPassOutputWidth}) * uint(${PassConstants.eachPassOutputHeight}) * (uint(frame) + uint(bias));
+        uvec2 x = uvec2(gl_FragCoord) + uint(${PassVariable.eachPassOutputWidth}) * uint(${PassVariable.eachPassOutputHeight}) * (uint(frame) + uint(bias));
         uvec2 q = 1103515245U * ( (x>>1U) ^ (x.yx   ) );
         uint  n = 1103515245U * ( (q.x  ) ^ (q.y>>3U) );
         return float(n) * (1.0/float(0xffffffffU));
     }
 """.trimIndent()
-
-
-const val piVal = "3.141592654"
 
 @Language("glsl")
 const val randomVec1a = "vec2(gl_FragCoord.x + time, gl_FragCoord.y + time)"
@@ -125,7 +113,7 @@ val uniformRandomDirection = """
         float r2 = random3(0);
         
         float z = 1.0 - 2.0 * r2;
-        float phi = 2.0 * $piVal * r1;
+        float phi = 2.0 * ${PassVariable.pi} * r1;
         float x = cos(phi) * sqrt(r2);
         float y = sin(phi) * sqrt(r2);
         return vec3(x, y, z);
@@ -139,13 +127,13 @@ val cosineWeightDirection = """
 //        float r1 = random3(bias);
 //        float r2 = random3(0);
 //        float r = sqrt(r2);
-//        float theta = 2.0 * $piVal * r1;
+//        float theta = 2.0 * ${PassVariable.pi} * r1;
         
         // why this one better??
         float i = floor(N_POINTS * random3(0)) + (random3(0) * 0.5);
         // the Golden angle in radians
-        float theta = i * 2.39996322972865332 + mod(float(frame), 2.0*$piVal);
-        theta = mod(theta, 2.0*$piVal);
+        float theta = i * 2.39996322972865332 + mod(float(frame), 2.0*${PassVariable.pi});
+        theta = mod(theta, 2.0*${PassVariable.pi});
         float r = sqrt(i / N_POINTS); // sqrt pushes points outward to prevent clumping in center of disk
 
 
@@ -189,11 +177,11 @@ val intersectCubeFunc = """
 @Language("glsl")
 val cubeNormalFunc = """
     vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax) {
-        if(hit.x < cubeMin.x + $eps) return vec3(-1.0, 0.0, 0.0);
-        else if (hit.x > cubeMax.x - $eps) return vec3(1.0, 0.0, 0.0);
-        else if (hit.y < cubeMin.y + $eps) return vec3(0.0, -1.0, 0.0);
-        else if (hit.y > cubeMax.y - $eps) return vec3(0.0, 1.0, 0.0);
-        else if (hit.z < cubeMin.z + $eps) return vec3(0.0, 0.0, -1.0);
+        if(hit.x < cubeMin.x + ${PassVariable.eps}) return vec3(-1.0, 0.0, 0.0);
+        else if (hit.x > cubeMax.x - ${PassVariable.eps}) return vec3(1.0, 0.0, 0.0);
+        else if (hit.y < cubeMin.y + ${PassVariable.eps}) return vec3(0.0, -1.0, 0.0);
+        else if (hit.y > cubeMax.y - ${PassVariable.eps}) return vec3(0.0, 1.0, 0.0);
+        else if (hit.z < cubeMin.z + ${PassVariable.eps}) return vec3(0.0, 0.0, -1.0);
         else return vec3(0.0, 0.0, 1.0);
     }
 """.trimIndent()
@@ -236,7 +224,7 @@ val intersectSphereFunc = """
             float t = (-b - sqrt(discriminant)) / (2.0 * a);
             if(t > 0.0) return t;
         }
-        return $infinity;
+        return ${PassVariable.infinity};
     }
 """.trimIndent()
 
@@ -264,7 +252,7 @@ val sphereDefines = """
 const val cornellBoxBackgroundColor = "vec3(0.6)"
 
 @Language("glsl")
-const val blackBackgroundColor = "vec3(0.1)"
+const val blackBackgroundColor = "vec3(0.0)"
 
 @Language("glsl")
 const val lightColor = "vec3(1.0)"
@@ -288,7 +276,7 @@ val specularRay = """
 
 @Language("glsl")
 val glossyRay = """
-    float glossiness = ${PassConstants.glossiness};
+    float glossiness = ${PassVariable.glossiness};
     ray.direction = normalize(reflect(ray.direction, normal)) + uniformRandomDirection() * glossiness;
     vec3 reflectedLight = normalize(reflect(lightDir, normal));
     vec3 viewDir = normalize(ray.origin - hit);
@@ -302,7 +290,7 @@ val  calcColorFs = """
         vec3 colorMask = vec3(1.0);
         vec3 finalColor = vec3(0.0);
 
-        for (int pass = 0; pass < $bounces; pass++) {
+        for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
             vec2 tRoom = intersectCube(ray, roomCubeMin, roomCubeMax);
             
             vec2 tCubeA = intersectCube(ray, cubeAMin, cubeAMax);
@@ -311,7 +299,7 @@ val  calcColorFs = """
             
             float tSphereA = intersectSphere(ray, sphereACenter, sphereARadius);
             
-            float t = $infinity;
+            float t = ${PassVariable.infinity};
             if (tRoom.x < tRoom.y) {
                 t = tRoom.y;
             }
@@ -332,7 +320,7 @@ val  calcColorFs = """
                 t = tSphereA;
             }
             
-            if (t == $infinity) {
+            if (t == ${PassVariable.infinity}) {
                 break;
             }
             
@@ -477,11 +465,11 @@ val tracerFs = """
 
     
     void main() {
-        float lightArea = 4.0 * $piVal * 0.5 * 0.5;
+        float lightArea = 4.0 * ${PassVariable.pi} * 0.5 * 0.5;
         vec3 lightRay = normalize($lightPos + uniformRandomDirection() * lightArea);
         Ray ray = Ray(eyePos, traceRay);
         vec3 color = calcColor(ray, lightRay);
-        vec2 coord = vec2(gl_FragCoord.x / ${PassConstants.eachPassOutputWidth}, gl_FragCoord.y / ${PassConstants.eachPassOutputHeight});
+        vec2 coord = vec2(gl_FragCoord.x / ${PassVariable.eachPassOutputWidth}, gl_FragCoord.y / ${PassVariable.eachPassOutputHeight});
         vec3 previousColor = texture(previous, coord).rgb;
         FragColor = vec4(mix(color, previousColor, weight), 1.0);
     }
