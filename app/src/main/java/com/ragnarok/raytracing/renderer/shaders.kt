@@ -13,6 +13,7 @@ object PassConstants {
 }
 
 //TODO: refactor code, better data structure for objects organization
+//TODO: rotate test
 //TODO: pbr materials
 
 @Language("glsl")
@@ -260,13 +261,16 @@ val sphereDefines = """
 """.trimIndent()
 
 @Language("glsl")
-const val  backgroundColor = "vec3(0.6)"
+const val cornellBoxBackgroundColor = "vec3(0.6)"
 
 @Language("glsl")
-const val lightColor = "vec3(0.75)"
+const val blackBackgroundColor = "vec3(0.1)"
 
 @Language("glsl")
-const val lightPos = "vec3(0.5, 0.75, 1.0)"
+const val lightColor = "vec3(1.0)"
+
+@Language("glsl")
+const val lightPos = "vec3(0.0, 0.5, 0.5)"
 
 @Language("glsl")
 val diffuseRay = """
@@ -334,7 +338,7 @@ val  calcColorFs = """
             
             vec3 hit = pointAt(ray, t);
             vec3 normal = vec3(0.0);
-            vec3 surfaceColor = $backgroundColor;
+            vec3 surfaceColor = $blackBackgroundColor;
             
             float shadow = 1.0;
             float specular = 0.0;
@@ -349,20 +353,28 @@ val  calcColorFs = """
                     surfaceColor = vec3(1.0, 0.3, 0.1);
                 } else if (hit.x > delta) {
                     surfaceColor = vec3(0.3, 1.0, 0.1);
+                } else if (hit.y < -1.0 * delta || hit.y > delta) {
+                    surfaceColor = $cornellBoxBackgroundColor;
+                } else if (hit.z < -1.0 * delta) {
+                    surfaceColor = $cornellBoxBackgroundColor;
                 }
                 // create a new diffuse ray
                 ray.direction = normalize(cosineWeightDirection(normal, pass));
             } else {
                 if (t == tCubeA.x && tCubeA.x < tCubeA.y) {
+                    surfaceColor = $cornellBoxBackgroundColor;
                     normal = normalForCube(hit, cubeAMin, cubeAMax);
                     $specularRay
                 } else if (t == tCubeB.x && tCubeB.x < tCubeB.y) {
+                    surfaceColor = $cornellBoxBackgroundColor;
                     normal = normalForCube(hit, cubeBMin, cubeBMax);
                     $glossyRay                         
                 } else if (t == tCubeC.x && tCubeC.x < tCubeC.y) {
+                    surfaceColor = $cornellBoxBackgroundColor;
                     normal = normalForCube(hit, cubeCMin, cubeCMax);
                     $diffuseRay
                 } else if (t == tSphereA) {
+                    surfaceColor = $cornellBoxBackgroundColor;
                     normal = normalForSphere(hit, sphereACenter, sphereARadius);
                     $specularRay
                 }
@@ -465,7 +477,7 @@ val tracerFs = """
 
     
     void main() {
-        float lightArea = 4.0 * $piVal * 0.3 * 0.3;
+        float lightArea = 4.0 * $piVal * 0.5 * 0.5;
         vec3 lightRay = normalize($lightPos + uniformRandomDirection() * lightArea);
         Ray ray = Ray(eyePos, traceRay);
         vec3 color = calcColor(ray, lightRay);
