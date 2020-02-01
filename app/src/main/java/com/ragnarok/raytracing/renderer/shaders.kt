@@ -372,7 +372,7 @@ val  calcColorFs = """
 
             
             // shadow ray test
-            Ray shadowRay = Ray(hit, lightDir);
+            Ray shadowRay = Ray(hit + normal * ${PassVariable.eps}, lightDir);
             tCubeA = intersectCube(shadowRay, cubeAMin, cubeAMax);
             if (tCubeA.x > 0.0 && tCubeA.y > 0.0 && tCubeA.x < tCubeA.y) {
                 shadow = 0.0;
@@ -469,6 +469,7 @@ val tracerFs = """
         vec3 lightRay = normalize($lightPos + uniformRandomDirection() * lightArea);
         Ray ray = Ray(eyePos, traceRay);
         vec3 color = calcColor(ray, lightRay);
+        color = max(vec3(0), color);
         vec2 coord = vec2(gl_FragCoord.x / ${PassVariable.eachPassOutputWidth}, gl_FragCoord.y / ${PassVariable.eachPassOutputHeight});
         vec3 previousColor = texture(previous, coord).rgb;
         FragColor = vec4(mix(color, previousColor, weight), 1.0);
