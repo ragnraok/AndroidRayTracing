@@ -24,7 +24,7 @@ val cornellBoxScene = """
         Sphere(vec3(0.25, -0.75, 0.5), 0.25)
     );
     
-    PointLight pointLight = PointLight(vec3(0.3, 0.8, 0.5), 0.5, vec3(0.8));
+    PointLight pointLight = PointLight(vec3(-0.5, 0.3, 0.5), 0.3, vec3(0.75));
     
     // scene intersect
     $intersectScene {
@@ -61,7 +61,7 @@ val cornellBoxScene = """
                 t = intersect.nearFar.x;
                 hit = pointAt(ray, t);
                 normal = normalForCube(hit, boxCubes[i]);
-                color = vec3(0.75);
+                color = vec3(0.5);
                 if (i == 0) {
                     material.type = MIRROR;
                 } else if (i == 1) {
@@ -97,12 +97,13 @@ val cornellBoxScene = """
     
     // shadow test
     $intersectShadowRay {
+        // something wrong
         Intersection intersect;
         float shadow = 1.0;
         for (int i = 0; i < BOX_NUMS; i++) {
             intersect = intersectCube(shadowRay, boxCubes[i]);
 
-            if (intersect.nearFar.x > 0.0 && intersect.nearFar.y > 0.0 && intersect.nearFar.x < intersect.nearFar.y) {
+            if (intersect.nearFar.x > 0.0 && intersect.nearFar.y < 1.0 && intersect.nearFar.x < intersect.nearFar.y) {
                 shadow = 0.0;
             }
         }

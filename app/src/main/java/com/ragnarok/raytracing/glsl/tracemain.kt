@@ -63,9 +63,11 @@ val tracerVs = """
 // main path tracing loop
 @Language("glsl")
 val traceLoop = """
-    vec3 calcColor(Ray ray, vec3 light) {
+    vec3 calcColor(Ray ray, PointLight pointLight) {
         vec3 colorMask = vec3(1.0);
         vec3 finalColor = vec3(0.0);
+        
+        vec3 light = pointLightDir(pointLight);
         
         for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
             Intersection intersect = intersectScene(ray);
@@ -73,7 +75,7 @@ val traceLoop = """
                 break;
             }
             
-            vec3 lightDir = normalize(light - intersect.hit);
+            vec3 lightDir = light - intersect.hit;
             float shadow = 1.0;
             float specular = 0.0;
             vec3 color = intersect.color;
@@ -85,8 +87,9 @@ val traceLoop = """
             colorMask *= intersect.color;
                         
             float NdotL = max(dot(intersect.normal, lightDir), 0.0);
-            finalColor += colorMask * (pointLight.color * NdotL * shadow);
-//            finalColor += colorMask * specular * shadow;
+            vec3 radiance = pointLight.color * pointLightAttenuation(pointLight, intersect.hit);
+            finalColor += colorMask * (radiance * NdotL * shadow);
+            finalColor += colorMask * specular * shadow;
             
             ray.origin = intersect.hit;
         }
@@ -132,9 +135,8 @@ val tracerFs = """
     $traceLoop
 
     void main() {
-        vec3 lightDir = pointLightDir(pointLight);
         Ray ray = Ray(eyePos, traceRay);
-        vec3 color = calcColor(ray, lightDir);
+        vec3 color = calcColor(ray, pointLight);
         color = max(vec3(0.0), color);
         vec2 coord = vec2(gl_FragCoord.x / ${PassVariable.eachPassOutputWidth}, gl_FragCoord.y / ${PassVariable.eachPassOutputHeight});
         vec3 previousColor = texture(previous, coord).rgb;

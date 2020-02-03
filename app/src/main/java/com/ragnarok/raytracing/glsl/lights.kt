@@ -2,6 +2,8 @@ package com.ragnarok.raytracing.glsl
 
 import org.intellij.lang.annotations.Language
 
+// lights related function define
+
 // https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html#generatingrandomdirections
 @Language("glsl")
 val uniformRandomDirection = """
@@ -53,10 +55,18 @@ val cosineWeightDirection = """
 @Language("glsl")
 val pointLightDirection = """
     vec3 pointLightDir(PointLight pointLight) {
-        // TODO: attenuation
         float lightArea = 4.0 * ${PassVariable.pi} * pointLight.radius * pointLight.radius;
         vec3 lightRay = normalize(pointLight.position + uniformRandomDirection() * lightArea);
         return lightRay;
+    }
+""".trimIndent()
+
+@Language("glsl")
+val pointLightAttenuation = """
+    float pointLightAttenuation(PointLight pointLight, vec3 position) {
+        float dist = length(pointLight.position - position);
+        float attenuation = 1.0 / (dist * dist);
+        return attenuation;
     }
 """.trimIndent()
 
@@ -87,5 +97,6 @@ val lights = """
     $uniformRandomDirection
     $cosineWeightDirection
     $pointLightDirection
+    $pointLightAttenuation
     $materialRay
 """.trimIndent()
