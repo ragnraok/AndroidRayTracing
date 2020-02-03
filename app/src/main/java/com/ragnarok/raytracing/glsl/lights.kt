@@ -65,8 +65,15 @@ val pointLightDirection = """
 val pointLightAttenuation = """
     float pointLightAttenuation(PointLight pointLight, vec3 position) {
         float dist = length(pointLight.position - position);
-        float attenuation = 1.0 / (dist * dist);
+        float attenuation = 1.0 / (1.0 + dist * dist);
         return attenuation;
+    }
+""".trimIndent()
+
+@Language("glsl")
+val directionLightDir = """
+    vec3 directionLightDir(DirectionLight directionLight) {
+        return normalize(directionLight.direction + uniformRandomDirection() * 0.1);
     }
 """.trimIndent()
 
@@ -98,5 +105,6 @@ val lights = """
     $cosineWeightDirection
     $pointLightDirection
     $pointLightAttenuation
+    $directionLightDir
     $materialRay
 """.trimIndent()

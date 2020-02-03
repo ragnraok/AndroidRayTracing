@@ -63,6 +63,14 @@ val pointLight = """
     };
 """.trimIndent()
 
+@Language("glsl")
+val directionLight = """
+    struct DirectionLight {
+        vec3 direction;
+        vec3 color;
+    };
+""".trimIndent()
+
 val primitives = """
     $ray
     $material
@@ -70,6 +78,7 @@ val primitives = """
     $cube
     $sphere
     $pointLight
+    $directionLight
 """.trimIndent()
 
 

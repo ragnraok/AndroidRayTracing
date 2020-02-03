@@ -63,11 +63,12 @@ val tracerVs = """
 // main path tracing loop
 @Language("glsl")
 val traceLoop = """
-    vec3 calcColor(Ray ray, PointLight pointLight) {
+    vec3 calcColor(Ray ray) {
         vec3 colorMask = vec3(1.0);
         vec3 finalColor = vec3(0.0);
         
-        vec3 light = pointLightDir(pointLight);
+        vec3 directionDir = directionLightDir(directionLight);
+        vec3 pointDir = pointLightDir(pointLight);
         
         for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
             Intersection intersect = intersectScene(ray);
@@ -75,20 +76,26 @@ val traceLoop = """
                 break;
             }
             
-            vec3 lightDir = light - intersect.hit;
+            vec3 pointLightDir = pointDir - intersect.hit;
+
+            vec3 directionLightDir = -directionDir;
+            
             float shadow = 1.0;
             float specular = 0.0;
             vec3 color = intersect.color;
             
-            ray = materialRay(ray, intersect, lightDir, pass, specular);
+            ray = materialRay(ray, intersect, directionLightDir, pass, specular);
             
-            shadow = getShadow(intersect, lightDir);
+            shadow = getShadow(intersect, directionLightDir);
             
             colorMask *= intersect.color;
                         
-            float NdotL = max(dot(intersect.normal, lightDir), 0.0);
-            vec3 radiance = pointLight.color * pointLightAttenuation(pointLight, intersect.hit);
-            finalColor += colorMask * (radiance * NdotL * shadow);
+            float pointNdotL = max(dot(intersect.normal, pointLightDir), 0.0);
+            float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
+            vec3 radiance = pointLight.color * pointLightAttenuation(pointLight, intersect.hit) * pointNdotL;
+            radiance += directionLight.color * directionNdotL;
+            
+            finalColor += colorMask * (radiance * shadow);
             finalColor += colorMask * specular * shadow;
             
             ray.origin = intersect.hit;
@@ -104,9 +111,16 @@ val commonDataFunc = """
     $intersections
 """.trimIndent()
 
+// currently all scene only contains one pointLight and one directionLight
+// and only directionLight cast shadow
+@Language("glsl")
+val lightDecl = """
+    PointLight pointLight = PointLight(vec3(-0.5, 0.5, -0.6), 0.5, vec3(0.6));
+    DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(0.3));
+""".trimIndent()
+
 val scene = """
     $cornellBoxScene
-    
 """.trimIndent()
 
 @Language("glsl")
@@ -130,13 +144,15 @@ val tracerFs = """
     
     $scene
     
+    $lightDecl
+    
     $shadow
 
     $traceLoop
 
     void main() {
         Ray ray = Ray(eyePos, traceRay);
-        vec3 color = calcColor(ray, pointLight);
+        vec3 color = calcColor(ray);
         color = max(vec3(0.0), color);
         vec2 coord = vec2(gl_FragCoord.x / ${PassVariable.eachPassOutputWidth}, gl_FragCoord.y / ${PassVariable.eachPassOutputHeight});
         vec3 previousColor = texture(previous, coord).rgb;

@@ -16,15 +16,13 @@ val cornellBoxScene = """
     const int SPHERE_NUMS = 1;
     Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0));
     Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-        Cube(vec3(-0.25, -1.0, -0.5), vec3(0.25, 0.5, -0.25)),
-        Cube(vec3(0.5, -1.0, -0.5), vec3(1.0, -0.25, -0.25)),
-        Cube(vec3(-1.0, -1.0, -0.25), vec3(-0.5, -0.25, 0.0))
+        Cube(vec3(-0.25, -1.0, -0.25), vec3(0.25, -0.25, 0.0)),
+        Cube(vec3(0.5, -1.0, -1.0), vec3(1.0, -0.25, -0.75)),
+        Cube(vec3(-1.0, -1.0, 0.0), vec3(-0.5, 0.25, 0.25))
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
         Sphere(vec3(0.25, -0.75, 0.5), 0.25)
     );
-    
-    PointLight pointLight = PointLight(vec3(-0.5, 0.3, 0.5), 0.3, vec3(0.75));
     
     // scene intersect
     $intersectScene {
@@ -57,7 +55,7 @@ val cornellBoxScene = """
         Intersection intersect;
         for (int i = 0; i < BOX_NUMS; i++) {
             intersect = intersectCube(ray, boxCubes[i]);
-            if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
+            if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
                 t = intersect.nearFar.x;
                 hit = pointAt(ray, t);
                 normal = normalForCube(hit, boxCubes[i]);
@@ -103,7 +101,7 @@ val cornellBoxScene = """
         for (int i = 0; i < BOX_NUMS; i++) {
             intersect = intersectCube(shadowRay, boxCubes[i]);
 
-            if (intersect.nearFar.x > 0.0 && intersect.nearFar.y < 1.0 && intersect.nearFar.x < intersect.nearFar.y) {
+            if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < 1.0 && intersect.nearFar.x < intersect.nearFar.y) {
                 shadow = 0.0;
             }
         }
