@@ -63,9 +63,9 @@ val cornellBoxScene = """
                 normal = normalForCube(hit, boxCubes[i]);
                 color = vec3(0.75);
                 if (i == 0) {
-                    material.type = GLOSSY;
-                } else if (i == 1) {
                     material.type = MIRROR;
+                } else if (i == 1) {
+                    material.type = GLOSSY;
                 }
             }
         }
