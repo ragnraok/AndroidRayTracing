@@ -3,7 +3,7 @@ package com.ragnarok.raytracing.renderer
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.util.Log
-import com.ragnarok.raytracing.glsl.PassVariable
+import com.ragnarok.raytracing.glsl.*
 import com.ragnarok.raytracing.model.Camera
 import com.ragnarok.raytracing.primitive.QuadRenderer
 import glm_.glm
