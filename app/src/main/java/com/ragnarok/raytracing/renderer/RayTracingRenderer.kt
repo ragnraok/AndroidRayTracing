@@ -1,5 +1,6 @@
 package com.ragnarok.raytracing.renderer
 
+import android.content.Context
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.util.Log
@@ -8,14 +9,12 @@ import com.ragnarok.raytracing.model.Camera
 import com.ragnarok.raytracing.primitive.QuadRenderer
 import glm_.glm
 import glm_.vec3.Vec3
-import rangarok.com.androidpbr.utils.Shader
-import rangarok.com.androidpbr.utils.clearGL
-import rangarok.com.androidpbr.utils.gen2DTextures
-import rangarok.com.androidpbr.utils.viewport
+import rangarok.com.androidpbr.renderer.SkyboxCalcTex
+import rangarok.com.androidpbr.utils.*
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class RayTracingRenderer : GLSurfaceView.Renderer {
+class RayTracingRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     companion object {
         const val TAG = "RayTracingRenderer"
@@ -31,7 +30,9 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
     private var outputShader: Shader? = null
     private var outputRenderer: QuadRenderer? = null
 
-    private val camera = Camera(Vec3(0.0, 0.0, 3.0))
+    private var hdrTex: Int = 0
+
+    private val camera = Camera(Vec3(0.0, 2.0, 3.0))
 
     private val textures = IntArray(2)
 
@@ -57,12 +58,15 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
     }
 
     private fun initRenderer() {
+
+        hdrTex = uploadTexture(context, "envs/newport_loft.png")
+
         textures.fill(0)
         gen2DTextures(textures)
         rayTracingShader = Shader(tracerVs, tracerFs)
 
-        pingRenderer = SceneRenderer(rayTracingShader, camera, textures[0])
-        pongRenderer = SceneRenderer(rayTracingShader, camera, textures[1])
+        pingRenderer = SceneRenderer(rayTracingShader, camera, skyboxTex = hdrTex, outputTex = textures[0])
+        pongRenderer = SceneRenderer(rayTracingShader, camera, skyboxTex = hdrTex, outputTex = textures[1])
 
         outputShader = Shader(outputVs, outputFs)
         outputRenderer = QuadRenderer()
@@ -73,7 +77,7 @@ class RayTracingRenderer : GLSurfaceView.Renderer {
     private fun renderFrame() {
         // render ray tracing scene
         val projection = glm.perspective(glm.radians(camera.zoom), (PassVariable.eachPassOutputWidth/PassVariable.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
-        var view = camera.lookAt(Vec3(0))
+        val view = camera.lookAt(Vec3(0))
 
         pingRenderer?.render(projection, view, pongRenderer?.outputTex?:0, renderCount)
         pongRenderer?.render(projection, view, pingRenderer?.outputTex?:0, renderCount)

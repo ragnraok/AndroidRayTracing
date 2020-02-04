@@ -13,7 +13,7 @@ import glm_.vec4.Vec4
 import rangarok.com.androidpbr.utils.*
 import kotlin.math.max
 
-class SceneRenderer(private val shader: Shader?, private val camera: Camera, val outputTex: Int = 0) {
+class SceneRenderer(private val shader: Shader?, private val camera: Camera, private val skyboxTex: Int = 0, val outputTex: Int = 0) {
 
     companion object {
         const val TAG = "SceneRenderer"
@@ -62,7 +62,11 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, previewOutput)
             setInt("previous", 0)
 
-            var model = Mat4(1.0)
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE1)
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, skyboxTex)
+            setInt("skybox", 1)
+
+            val model = Mat4(1.0)
             val modelViewProjection = projection * view
             setMat4("projection", projection)
             setMat4("view", view)
@@ -95,6 +99,11 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, val
             quadRenderer?.render()
         }
 
+//        skybox.render(projection, view)
+
+        GLES30.glFinish()
+
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP, 0)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
     }

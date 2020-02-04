@@ -20,6 +20,8 @@ val outputVs = """
 @Language("glsl")
 val outputFs = """
     #version 300 es
+    precision highp float;
+    precision highp int;
     
     out vec4 FragColor;
     in vec2 TexCoords;
@@ -73,6 +75,7 @@ val traceLoop = """
         for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
             Intersection intersect = intersectScene(ray);
             if (intersect.t == $infinity) {
+                finalColor += colorMask* getSkyboxColorByRay(ray);
                 break;
             }
             
@@ -82,13 +85,13 @@ val traceLoop = """
             
             float shadow = 1.0;
             float specular = 0.0;
-            vec3 color = intersect.color;
+            vec3 color = intersect.material.color;
             
             ray = materialRay(ray, intersect, directionLightDir, pass, specular);
             
             shadow = getShadow(intersect, directionLightDir);
             
-            colorMask *= intersect.color;
+            colorMask *= color;
                         
             float pointNdotL = max(dot(intersect.normal, pointLightDir), 0.0);
             float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
@@ -109,6 +112,7 @@ val commonDataFunc = """
     $primitives
     $lights
     $intersections
+    $skybox
 """.trimIndent()
 
 // currently all scene only contains one pointLight and one directionLight
@@ -120,7 +124,7 @@ val lightDecl = """
 """.trimIndent()
 
 val scene = """
-    $cornellBoxScene
+    $spherePlane
 """.trimIndent()
 
 @Language("glsl")
@@ -139,6 +143,8 @@ val tracerFs = """
     uniform int frame;
     
     uniform sampler2D previous; // last pass output
+    
+    uniform sampler2D skybox; // background skybox
     
     $commonDataFunc
     

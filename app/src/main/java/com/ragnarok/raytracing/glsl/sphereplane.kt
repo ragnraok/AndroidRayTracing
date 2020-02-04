@@ -1,0 +1,71 @@
+package com.ragnarok.raytracing.glsl
+
+import org.intellij.lang.annotations.Language
+
+@Language("glsl")
+val spherePlane = """
+    const Material diffuseMaterial = Material(DIFFUSE, vec3(0.9), 0.0, 0.0, false);
+    const Material mirrorMaterial = Material(MIRROR, vec3(0.5), 0.0, 0.0, false);
+    Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, diffuseMaterial);
+    const int SPHERE_NUMS = 3;
+    Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
+            Sphere(vec3(0.5, 0.25, 0.5), 0.25, mirrorMaterial),
+            Sphere(vec3(-0.5, 0.25, 0.0), 0.25, mirrorMaterial),
+            Sphere(vec3(0.0, 0.25, 1.0), 0.25, mirrorMaterial)
+    );
+        
+    $intersectSceneFuncHead {
+        float t = ${PassVariable.infinity};
+        vec3 hit = vec3(0.0);
+        vec3 normal = vec3(0.0);
+        Material material;
+        
+        Intersection intersect;
+        
+        Intersection planeIntersect = intersectPlane(ray, plane);
+        if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
+            t = planeIntersect.nearFar.x;
+            hit = pointAt(ray, t);
+            intersect.nearFar = planeIntersect.nearFar;
+            normal = normalForPlane(hit, plane);
+            material = plane.material;
+        }
+        
+        for (int i = 0; i < SPHERE_NUMS; i++) {
+            intersect = intersectSphere(ray, spheres[i]);
+            if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
+                t = intersect.nearFar.x;
+                hit = pointAt(ray, t);
+                normal = normalForSphere(hit, spheres[i]);
+                material = spheres[i].material;
+            }
+        }
+            
+        intersect.t = t;
+        if (t == ${PassVariable.infinity}) {
+            intersect.nearFar = vec2(${PassVariable.infinity}, ${PassVariable.infinity});
+            return intersect;
+        }
+        
+        intersect.hit = hit;
+        intersect.normal = normal;
+        intersect.material = material;
+        
+        return intersect;
+    }
+    
+    $intersectShadowRayFuncHead {
+        Intersection intersect;
+        float shadow = 1.0;
+        
+        for (int i = 0; i < SPHERE_NUMS; i++) {
+            intersect = intersectSphere(shadowRay, spheres[i]);
+
+            if (intersect.nearFar.x < 1.0) {
+                shadow = 0.0;
+            }   
+        }
+
+        return shadow;
+    }
+""".trimIndent()

@@ -58,9 +58,35 @@ val normalForSphere = """
     }
 """.trimIndent()
 
+@Language("glsl")
+val intersectPlane = """
+    Intersection intersectPlane(Ray ray, Plane plane) {
+        Intersection intersect;
+        float t = ${PassVariable.infinity};
+        if (dot(ray.origin, plane.normal) > 0.0) {
+            t = dot(plane.center - ray.origin, plane.normal) / dot(ray.direction, plane.normal);
+            vec3 hit = pointAt(ray, t);
+            if (abs(hit.x - plane.center.x) > plane.size || abs(hit.y - plane.center.y) > plane.size || abs(hit.z - plane.center.z) > plane.size) {
+                 t = ${PassVariable.infinity};
+            }
+        }
+        intersect.nearFar = vec2(t, t);
+        return intersect;
+    }
+""".trimIndent()
+
+@Language("glsl")
+val normalForPlane = """
+    vec3 normalForPlane(vec3 hit, Plane plane) {
+        return plane.normal;
+    }
+""".trimIndent()
+
 val intersections = """
     $intersectCube
     $normalForCube
     $intersectSphere
     $normalForSphere
+    $intersectPlane
+    $normalForPlane
 """.trimIndent()

@@ -23,6 +23,10 @@ val material = """
     const int GLOSSY = 3;
     struct Material {
         int type;
+        vec3 color;
+        float metallic;
+        float roughness;
+        bool glass;
     };
 """.trimIndent()
 
@@ -32,7 +36,6 @@ val intersection = """
         vec2 nearFar;
         vec3 normal;
         float t;
-        vec3 color;
         vec3 hit;
         Material material;
     };
@@ -43,6 +46,7 @@ val cube = """
     struct Cube {
         vec3 cubeMin;
         vec3 cubeMax;
+        Material material;
     };
 """.trimIndent()
 
@@ -51,6 +55,17 @@ val sphere = """
     struct Sphere {
         vec3 center;
         float radius;
+        Material material;
+    };
+""".trimIndent()
+
+@Language("glsl")
+val plane = """
+    struct Plane { 
+        vec3 center;
+        vec3 normal;
+        float size;
+        Material material;
     };
 """.trimIndent()
 
@@ -77,6 +92,7 @@ val primitives = """
     $intersection
     $cube
     $sphere
+    $plane
     $pointLight
     $directionLight
 """.trimIndent()

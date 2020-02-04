@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var surfaceView: GLSurfaceView
     private lateinit var infoTextView: TextView
 
-    private val renderer = RayTracingRenderer()
+    private lateinit var renderer: RayTracingRenderer
 
     private var renderLoopStart = false
     private val handler = Handler(Looper.getMainLooper()) {
@@ -36,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         surfaceView = findViewById(R.id.surfaceview)
         infoTextView = findViewById(R.id.info_tv)
 
+        renderer = RayTracingRenderer(this)
         surfaceView.setEGLContextClientVersion(3)
         surfaceView.setRenderer(renderer)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
