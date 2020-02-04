@@ -4,9 +4,8 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val spherePlane = """
-    const Material diffuseMaterial = Material(DIFFUSE, vec3(0.9), 0.0, 0.0, false);
     const Material mirrorMaterial = Material(MIRROR, vec3(0.5), 0.0, 0.0, false);
-    Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, diffuseMaterial);
+    Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, mirrorMaterial);
     const int SPHERE_NUMS = 3;
     Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
             Sphere(vec3(0.5, 0.25, 0.5), 0.25, mirrorMaterial),
@@ -29,6 +28,7 @@ val spherePlane = """
             intersect.nearFar = planeIntersect.nearFar;
             normal = normalForPlane(hit, plane);
             material = plane.material;
+            material.color = vec3(0.7, 0.6, 0.2);
         }
         
         for (int i = 0; i < SPHERE_NUMS; i++) {

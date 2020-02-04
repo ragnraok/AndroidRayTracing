@@ -89,11 +89,13 @@ const val CubeMapConversionFs = """
 val getSkyboxColorByRay = """
     vec2 getSkyboxUVByRay(Ray ray) {
         vec3 p = ray.direction;
+        // calculate spherical coordinate 
         float theta = acos(p.y);
         float phi = atan(p.z, p.x);
         if (phi < 0.0) {
             phi += 2.0 * $pi;
         }
+        // from spherical coordinate to sphere uv
         vec2 s;
         s.x = 1.0 - phi * (1.0 / (2.0 * $pi));
         s.y = theta * (1.0 / $pi);
