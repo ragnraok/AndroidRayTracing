@@ -53,8 +53,6 @@ val DFG = """
     vec3 fresnelSchlick(float cosTheta, vec3 F0)
     {
         return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
-//        float Fc = pow(1.0 - cosTheta, 5.0);
-//        return Fc + (1.0 - Fc) * F0;
     }
     // ----------------------------------------------------------------------------
     vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
@@ -86,7 +84,7 @@ val brdfLightColor = """
         
 //        vec3 F0 = vec3(0.04);
 //        F0 = mix(F0, baseColor, metallic);
-        baseColor = baseColor - baseColor * metallic;
+//        baseColor = baseColor - baseColor * metallic;
         vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
         
         vec3 H = normalize(V + L);
@@ -94,26 +92,17 @@ val brdfLightColor = """
         float NDF = DistributionGGX(N, H, roughness);
         float G = GeometrySmith(N, V, L, roughness);
         vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+
+        vec3 specularColor = NDF * G * F;
         
-        vec3 nominator  = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-        vec3 specularColor = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
-        
-        // kS is equal to Fresnel
-        vec3 kS = F;
-        // for energy conservation, the diffuse and specular light can't
-        // be above 1.0 (unless the surface emits light); to preserve this
-        // relationship the diffuse component (kD) should equal 1.0 - kS.
-        vec3 kD = vec3(1.0) - kS;
-        // multiply kD by the inverse metalness such that only non-metals
-        // have diffuse lighting, or a linear blend if partly metal (pure metals
-        // have no diffuse light).
-        kD *= 1.0 - metallic;
 
         // scale light by NdotL
         float NdotL = max(dot(N, L), 0.0);
         
-        vec3 radiance = (kD * baseColor / $pi + specularColor) * lightColor * NdotL;
+//        vec3 diffuseColor = kD * baseColor / $pi;
+        vec3 diffuseColor = baseColor / $pi;
+        
+        vec3 radiance = (diffuseColor + specularColor) * lightColor * NdotL;
         
         return radiance;
     }
@@ -182,33 +171,28 @@ val brdfMaterialColor = """
         
 //        vec3 F0 = vec3(0.04);
 //        F0 = mix(F0, baseColor, metallic);
-        baseColor = baseColor - baseColor * metallic;
+//        baseColor = baseColor - baseColor * metallic;
+
         vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
         vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
-        
-        // kS is equal to Fresnel
-        vec3 kS = F;
-        // for energy conservation, the diffuse and specular light can't
-        // be above 1.0 (unless the surface emits light); to preserve this
-        // relationship the diffuse component (kD) should equal 1.0 - kS.
-        vec3 kD = vec3(1.0) - kS;
-        // multiply kD by the inverse metalness such that only non-metals
-        // have diffuse lighting, or a linear blend if partly metal (pure metals
-        // have no diffuse light).
-        kD *= 1.0 - metallic;    
+         
         
         if (diffuse) {
             if (NdotL > 0.0) {
-                color = kD * baseColor * NdotL;
+                color = baseColor;
             }
         } else {
             float NDF = DistributionGGX(N, H, roughness);
             float G = GeometrySmith(N, V, L, roughness);
+            
+            vec3 specularColor =  G * F;
+            float ss = 4.0 * NdotL * VdotH / (VdotH + 0.001);
+            specular *= ss;
+            specular *= NdotL;
 
-            vec3 nominator  = NDF * G * F;
-            float denominator = 4.0 * max(dot(N, V), 0.0) * NdotL;
-            vec3 specularColor = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
-            specularColor *= NdotL;
+//            vec3 nominator    = NDF * G * F;
+//            float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+//            vec3 specularColor = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
 
             color = specularColor;
         }
@@ -217,36 +201,33 @@ val brdfMaterialColor = """
 """.trimIndent()
 
 @Language("glsl")
-val brdfMaterialAmbientColor = """
-    vec3 brdfMaterialAmbientColor(vec3 ambientColor, vec3 N, vec3 L, vec3 V, Material material, bool diffuse) {
+val brdfMaterialPdf = """
+    float brdfMaterialPdf(vec3 N, vec3 L, vec3 V, Material material, bool diffuse) {
         vec3 baseColor = material.color;
         float metallic = material.metallic;
         float roughness = material.roughness;
         float specular = material.specular;
-        
-        baseColor = baseColor - baseColor * metallic;
-        
-        vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
         N = normalize(N);
         L = normalize(L);
         V = normalize(V);
-        
+
         vec3 H = normalize(V + L);
-        vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
-        vec3 kS = F;
-        vec3 kD = 1.0 - kS;
-        kD *= 1.0 - metallic;
+        float NdotL = max(0.0, dot(N, L));
+        float NdotH = max(0.0, dot(N, H));
+        float VdotH = max(0.0, dot(V, H));
+
+        
         if (diffuse) {
-            vec3 diffuseColor = kD * ambientColor * baseColor;
-            float pdf = max(dot(N, L), 0.0) / $pi;
-            return diffuseColor;
+            return NdotL / $pi;
         } else {
+//            baseColor = baseColor - baseColor * metallic;
+            vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
+            vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+            
             float NDF = DistributionGGX(N, H, roughness);
-            vec3 envBrdf = EnvDFGLazarov(F0, roughness, max(dot(N, V), 0.0));
-            vec3 specularColor = ambientColor * (F * envBrdf);
-            float pdf = NDF * max(dot(N, H), 0.0) / (4.0 * max(dot(V, H), 0.0)) + 0.0001;
-            return specularColor;
+            return NDF * NdotH / (4.0 * VdotH);
         }
+        
     }
 """.trimIndent()
 
@@ -266,19 +247,38 @@ val brdfRayDir = """
         vec3 tangentX = normalize(cross(up, N));
         vec3 tangentY = normalize(cross(tangentX, N));
         
-//        if (random(frame) < diffuseRatio) {
-//            // diffuse irradiance sample
-//            dir = CosineSampleHemisphere(u, v);
-//            dir = tangentX * dir.x  + tangentY * dir.y + N * dir.z;
-//            dir = normalize(dir);
-//            isDiffuseRay = true;
-//            return dir;
-//        } else {
+        if (random(frame) < diffuseRatio) {
+            // diffuse irradiance sample
+            dir = CosineSampleHemisphere(u, v);
+            dir = tangentX * dir.x  + tangentY * dir.y + N * dir.z;
+            dir = normalize(dir);
+            isDiffuseRay = true;
+            return dir;
+        } else {
             // specular radiance sample
             dir = ImportanceSampleGGX(uv, N, roughness);
             isDiffuseRay = false;
             return dir;
-//        }
+        }
+    }
+""".trimIndent()
+
+@Language("glsl")
+val samplePointLight = """
+    float powerHeuristic(float a, float b) {
+        float t = a * a;
+        return t / (b*b + t);
+    }
+    
+    vec3 samplePointLight(int depth, bool specularBounce, float brdfPdf, float lightPdf, vec3 emission) {
+        vec3 Le;
+
+        if (depth == 0 || specularBounce)
+            Le = emission;
+        else
+            Le = powerHeuristic(brdfPdf, lightPdf) * emission / lightPdf;
+
+        return Le;
     }
 """.trimIndent()
 
@@ -288,6 +288,7 @@ val brdf = """
     $importSampleGGX
     $cosineSampleHemisphere
     $brdfMaterialColor
-    $brdfMaterialAmbientColor
+    $brdfMaterialPdf
     $brdfRayDir
+    $samplePointLight
 """.trimIndent()

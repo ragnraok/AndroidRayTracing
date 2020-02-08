@@ -1,6 +1,7 @@
 package com.ragnarok.raytracing.glsl
 
 import com.ragnarok.raytracing.glsl.PassVariable.infinity
+import com.ragnarok.raytracing.glsl.PassVariable.pi
 import org.intellij.lang.annotations.Language
 
 @Language("glsl")
@@ -34,7 +35,7 @@ val outputFs = """
     }
 
     void main() {
-        color = texture(texture, TexCoords).rgb;
+        vec3 color = texture(texture, TexCoords).rgb;
         color = toneMap(color);
         FragColor = vec4(color, 1.0);
     }
@@ -83,16 +84,21 @@ val traceLoop = """
         Material material;
         Intersection lastIntersect;
         Ray lastRay;
+        float pdf = 1.0;
         for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
             Intersection intersect = intersectScene(ray);
+            
             if (intersect.t == $infinity) {
                 vec3 ambient = getSkyboxColorByRay(ray);
-                if (ray.pbrBRDF && pass >= 1) {
-                    vec3 viewDir = normalize(lastRay.origin - lastIntersect.hit);
-                    ambient = brdfMaterialAmbientColor(ambient, lastIntersect.normal, -ray.direction, viewDir, material, ray.pbrDiffuseRay);
-//                    ambient = brdfMaterialAmbientColor(ambient, vec3(0.0, 1.0, 0.0), normalize(vec3(0.5, 0.5, 0.0)), vec3(0.0, 1.0, 0.0), material, false);
+                Intersection lightIntersect = intersectPointLight(ray, pointLight);
+                if (lightIntersect.nearFar.x > 0.0 && lightIntersect.nearFar.x < intersect.t) {
+                    float t = lightIntersect.nearFar.x;
+                    float lightPdf = (t * t) / (4.0 * $pi * pointLight.radius * pointLight.radius);
+                    vec3 color = samplePointLight(pass, false, pdf, lightPdf, pointLight.color);
+                    finalColor += color * colorMask * ambient;
+                } else {
+                    finalColor += ambient * colorMask;
                 }
-                finalColor += ambient * colorMask;
                 break;
             }
             
@@ -127,10 +133,8 @@ val traceLoop = """
                 radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
                 
                 // material diffuse and specular color
-//                colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
-                colorMask *= color;
-                
-//                finalColor += (colorMask + radiance) * shadow;
+                colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
+                pdf = brdfMaterialPdf(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
                 finalColor += colorMask * (radiance * shadow);
             } else {
                 // diffuse
@@ -144,6 +148,8 @@ val traceLoop = """
                 
                 finalColor += colorMask * (radiance * shadow);
                 finalColor += colorMask * specular * shadow;
+                
+                pdf = 1.0;
             }
             
             lastRay = ray;
@@ -166,8 +172,8 @@ val commonDataFunc = """
 // and only directionLight cast shadow
 @Language("glsl")
 val lightDecl = """
-    PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.0), 2.0, vec3(1.0));
-    DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(1.0));
+    PointLight pointLight = PointLight(vec3(-0.5, 1.0, 0.5), 0.1, vec3(1.0));
+    DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(0.75));
 """.trimIndent()
 
 @Language("glsl")

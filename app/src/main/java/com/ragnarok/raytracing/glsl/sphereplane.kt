@@ -4,13 +4,12 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val spherePlane = """
-    const Material mirrorMaterial = Material(PBR_BRDF, vec3(1.0, 0.7, 0.5), 0.7, 0.06, 1.0, false);
-    Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, mirrorMaterial);
+    Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(DIFFUSE, vec3(0.9), 0.0, 0.0, 0.0, false));
     const int SPHERE_NUMS = 3;
     Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-            Sphere(vec3(0.5, 0.25, 0.5), 0.25, mirrorMaterial),
-            Sphere(vec3(-0.5, 0.25, 0.0), 0.25, mirrorMaterial),
-            Sphere(vec3(0.0, 0.25, 1.0), 0.25, mirrorMaterial)
+            Sphere(vec3(-0.5, 0.25, 0.5), 0.25, Material(PBR_BRDF, vec3(1.0, 0.7, 0.5), 0.05, 0.05, 1.0, false)),
+            Sphere(vec3(0.0, 0.25, 1.0), 0.25, Material(PBR_BRDF, vec3(1.0, 0.7, 0.5), 0.05, 1.0, 0.0, false)),
+            Sphere(vec3(0.5, 0.25, 0.5), 0.25, Material(PBR_BRDF, vec3(1.0, 0.7, 0.5), 1.0, 0.05, 1.0, false))
     );
         
     $intersectSceneFuncHead {
@@ -28,12 +27,8 @@ val spherePlane = """
             intersect.nearFar = planeIntersect.nearFar;
             normal = normalForPlane(hit, plane);
             material = plane.material;
-            material.metallic = 0.0;
-            material.roughness = 1.0;
-            material.specular = 0.0;
-            material.color = vec3(0.9);
         }
-        
+
         for (int i = 0; i < SPHERE_NUMS; i++) {
             intersect = intersectSphere(ray, spheres[i]);
             if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
@@ -47,6 +42,7 @@ val spherePlane = """
         intersect.t = t;
         if (t == ${PassVariable.infinity}) {
             intersect.nearFar = vec2(${PassVariable.infinity}, ${PassVariable.infinity});
+            intersect.t = ${PassVariable.infinity};
             return intersect;
         }
         

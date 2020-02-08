@@ -34,6 +34,8 @@ class RayTracingRenderer(private val context: Context) : GLSurfaceView.Renderer 
 
     private val camera = Camera(Vec3(0.0, 2.0, 3.0))
 
+//    private val camera = Camera(Vec3(0.0, 0.0, 3.0))
+
     private val textures = IntArray(2)
 
     private var renderCount = 0
