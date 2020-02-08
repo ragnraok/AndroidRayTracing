@@ -1,8 +1,7 @@
-package com.ragnarok.raytracing.renderer
+package com.ragnarok.raytracing.primitive
 
 import android.opengl.GLES30
 import android.util.Log
-import com.ragnarok.raytracing.primitive.PrimitiveRenderer
 import com.ragnarok.raytracing.utils.CubeVertices
 import rangarok.com.androidpbr.utils.genBuffer
 import rangarok.com.androidpbr.utils.genVAO

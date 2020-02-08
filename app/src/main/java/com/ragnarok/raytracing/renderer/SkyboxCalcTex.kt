@@ -4,7 +4,7 @@ import android.opengl.GLES30
 import android.util.Log
 import com.ragnarok.raytracing.glsl.CubeMapConversionFs
 import com.ragnarok.raytracing.glsl.CubeMapVs
-import com.ragnarok.raytracing.renderer.CubeRenderer
+import com.ragnarok.raytracing.primitive.CubeRenderer
 import com.ragnarok.raytracing.utils.cubemapProjection
 import com.ragnarok.raytracing.utils.cubemapViews
 import rangarok.com.androidpbr.utils.*

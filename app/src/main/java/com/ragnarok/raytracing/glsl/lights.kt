@@ -79,7 +79,7 @@ val directionLightDir = """
 
 @Language("glsl")
 val materialRay = """
-    Ray materialRay(Ray ray, Intersection intersection, vec3 lightDir, int bias, out float specular) {
+    Ray materialRay(Ray ray, Intersection intersection, vec3 lightDir, int bias, out float specular, out bool isBRDFDiffuseRay) {
         if (intersection.material.type == DIFFUSE) {
             ray.direction = normalize(cosineWeightDirection(intersection.normal, bias));
         } else if (intersection.material.type == MIRROR) {
@@ -95,12 +95,18 @@ val materialRay = """
             vec3 viewDir = normalize(ray.origin - intersection.hit);
             specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
             specular = 2.0 * specular;
+        } else if (intersection.material.type == PBR_BRDF) {
+            vec3 viewDir = normalize(ray.origin - intersection.hit);
+            bool isDiffuse = false;
+            ray.direction = brdfRayDir(intersection.normal, viewDir, intersection.material, bias, isDiffuse);
+            isBRDFDiffuseRay = isDiffuse;
         }
         return ray;
     }
 """.trimIndent()
 
 val lights = """
+    $brdf
     $uniformRandomDirection
     $cosineWeightDirection
     $pointLightDirection

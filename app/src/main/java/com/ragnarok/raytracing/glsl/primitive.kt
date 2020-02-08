@@ -9,6 +9,8 @@ val ray = """
     struct Ray {
         vec3 origin;
         vec3 direction;
+        bool pbrBRDF;
+        bool pbrDiffuseRay;
     };
     vec3 pointAt(Ray ray, float t) {
         return ray.origin + ray.direction * t;
@@ -21,11 +23,13 @@ val material = """
     const int DIFFUSE = 1;
     const int MIRROR = 2;
     const int GLOSSY = 3;
+    const int PBR_BRDF = 4;
     struct Material {
         int type;
         vec3 color;
         float metallic;
         float roughness;
+        float specular;
         bool glass;
     };
 """.trimIndent()

@@ -26,9 +26,17 @@ val outputFs = """
     out vec4 FragColor;
     in vec2 TexCoords;
     uniform sampler2D texture;
+    
+    vec3 toneMap(vec3 src) {
+    	vec3 color = src / (1.0 + src);
+    	color = pow(color,vec3(1.0/2.2,1.0/2.2,1.0/2.2));
+    	return color;
+    }
 
     void main() {
-        FragColor = texture(texture, TexCoords);
+        color = texture(texture, TexCoords).rgb;
+        color = toneMap(color);
+        FragColor = vec4(color, 1.0);
     }
 """.trimIndent()
 
@@ -72,36 +80,75 @@ val traceLoop = """
         vec3 directionDir = directionLightDir(directionLight);
         vec3 pointDir = pointLightDir(pointLight);
         
+        Material material;
+        Intersection lastIntersect;
+        Ray lastRay;
         for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
             Intersection intersect = intersectScene(ray);
             if (intersect.t == $infinity) {
-                finalColor += colorMask* getSkyboxColorByRay(ray);
+                vec3 ambient = getSkyboxColorByRay(ray);
+                if (ray.pbrBRDF && pass >= 1) {
+                    vec3 viewDir = normalize(lastRay.origin - lastIntersect.hit);
+                    ambient = brdfMaterialAmbientColor(ambient, lastIntersect.normal, -ray.direction, viewDir, material, ray.pbrDiffuseRay);
+//                    ambient = brdfMaterialAmbientColor(ambient, vec3(0.0, 1.0, 0.0), normalize(vec3(0.5, 0.5, 0.0)), vec3(0.0, 1.0, 0.0), material, false);
+                }
+                finalColor += ambient * colorMask;
                 break;
             }
             
-            vec3 pointLightDir = pointDir - intersect.hit;
+            lastIntersect = intersect;
+            vec3 pointLightDir = intersect.hit - pointDir; // point light to intersection
 
             vec3 directionLightDir = -directionDir;
             
             float shadow = 1.0;
             float specular = 0.0;
-            vec3 color = intersect.material.color;
+            bool isBRDFDiffuseRay = false;
+            material = intersect.material;
+            vec3 color = material.color;
             
-            ray = materialRay(ray, intersect, directionLightDir, pass, specular);
+            Ray newRay = materialRay(ray, intersect, directionLightDir, pass, specular, isBRDFDiffuseRay);
             
             shadow = getShadow(intersect, directionLightDir);
             
-            colorMask *= color;
-                        
-            float pointNdotL = max(dot(intersect.normal, pointLightDir), 0.0);
-            float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
-            vec3 radiance = pointLight.color * pointLightAttenuation(pointLight, intersect.hit) * pointNdotL;
-            radiance += directionLight.color * directionNdotL;
+            // light color
+            vec3 radiance = vec3(0.0);
             
-            finalColor += colorMask * (radiance * shadow);
-            finalColor += colorMask * specular * shadow;
+            vec3 pointLightColor = pointLight.color * pointLightAttenuation(pointLight, intersect.hit);
+            vec3 directionLightColor = directionLight.color;
             
-            ray.origin = intersect.hit;
+            if (intersect.material.type == PBR_BRDF) {
+                ray.pbrBRDF = true;
+                newRay.pbrBRDF = true;
+                newRay.pbrDiffuseRay = isBRDFDiffuseRay;
+                vec3 viewDir = normalize(ray.origin - intersect.hit);
+                // point light and direction light color
+                radiance += brdfLightColor(intersect.normal, pointLightDir, viewDir, pointLightColor, intersect.material);
+                radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
+                
+                // material diffuse and specular color
+//                colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
+                colorMask *= color;
+                
+//                finalColor += (colorMask + radiance) * shadow;
+                finalColor += colorMask * (radiance * shadow);
+            } else {
+                // diffuse
+                colorMask *= color;
+                
+                // point light and direction light color
+                float pointNdotL = max(dot(intersect.normal, -pointLightDir), 0.0);
+                float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
+                radiance = pointLightColor * pointNdotL;
+                radiance += directionLightColor * directionNdotL;
+                
+                finalColor += colorMask * (radiance * shadow);
+                finalColor += colorMask * specular * shadow;
+            }
+            
+            lastRay = ray;
+            newRay.origin = intersect.hit;
+            ray = newRay;
         }
         return finalColor;
     }
@@ -119,12 +166,8 @@ val commonDataFunc = """
 // and only directionLight cast shadow
 @Language("glsl")
 val lightDecl = """
-    PointLight pointLight = PointLight(vec3(-0.5, 0.5, -0.6), 0.5, vec3(0.6));
-    DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(0.3));
-""".trimIndent()
-
-val scene = """
-    $spherePlane
+    PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.0), 2.0, vec3(1.0));
+    DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(1.0));
 """.trimIndent()
 
 @Language("glsl")
@@ -147,17 +190,17 @@ val tracerFs = """
     uniform sampler2D skybox; // background skybox
     
     $commonDataFunc
-    
-    $scene
-    
+
     $lightDecl
+    
+    $spherePlane
     
     $shadow
 
     $traceLoop
 
     void main() {
-        Ray ray = Ray(eyePos, traceRay);
+        Ray ray = Ray(eyePos, traceRay, false, false);
         vec3 color = calcColor(ray);
         color = max(vec3(0.0), color);
         vec2 coord = vec2(gl_FragCoord.x / ${PassVariable.eachPassOutputWidth}, gl_FragCoord.y / ${PassVariable.eachPassOutputHeight});

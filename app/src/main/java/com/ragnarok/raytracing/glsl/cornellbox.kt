@@ -6,9 +6,9 @@ import org.intellij.lang.annotations.Language
 val cornellBox = """
     const int BOX_NUMS = 3;
     const int SPHERE_NUMS = 1;
-    const Material diffuseMaterial = Material(DIFFUSE, vec3(0.5), 0.0, 0.0, false);
-    const Material mirrorMaterial = Material(MIRROR, vec3(0.5), 0.0, 0.0, false);
-    const Material glossyMaterial = Material(GLOSSY, vec3(0.5), 0.0, 0.0, false);
+    const Material diffuseMaterial = Material(DIFFUSE, vec3(0.5), 0.0, 0.0, 0.0, false);
+    const Material mirrorMaterial = Material(MIRROR, vec3(0.5), 0.0, 0.0, 0.0, false);
+    const Material glossyMaterial = Material(GLOSSY, vec3(0.5), 0.0, 0.0, 0.0, false);
     Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), diffuseMaterial);
     Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
         Cube(vec3(-0.25, -1.0, -0.25), vec3(0.25, -0.25, 0.0), mirrorMaterial),

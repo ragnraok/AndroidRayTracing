@@ -82,6 +82,15 @@ val normalForPlane = """
     }
 """.trimIndent()
 
+@Language("glsl")
+val intersectPointLight = """
+    Intersection intersectPointLight(Ray ray, PointLight pointLight) {
+        Sphere pointLightSphere = Sphere(pointLight.position, pointLight.radius);
+        Intersection intersect = intersectSphere(ray, pointLightSphere);
+        return intersect;
+    }
+""".trimIndent()
+
 val intersections = """
     $intersectCube
     $normalForCube

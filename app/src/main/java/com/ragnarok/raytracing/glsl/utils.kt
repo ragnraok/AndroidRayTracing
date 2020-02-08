@@ -9,14 +9,14 @@ import org.intellij.lang.annotations.Language
 @Language("glsl")
 val randomFunc = """
     float random1(vec2 co, float bias){
-        return saturateMediump(fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453 + bias));
+        return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453 + bias);
     }
 """.trimIndent()
 
 @Language("glsl")
 val randomFunc2 = """
     float random2(vec3 scale, float seed) {
-        return saturateMediump(fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed));
+        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
     }
 """.trimIndent()
 
@@ -43,6 +43,15 @@ const val randomVec3a = "vec3(12.9898, 78.233, 151.7182)"
 @Language("glsl")
 const val randomVec3b = "vec3(63.7264, 10.873, 623.6736)"
 
+@Language("glsl")
+val commonDefine = """
+    #define MEDIUMP_FLT_MAX    65504.0
+    #define MEDIUMP_FLT_MIN    0.00006103515625
+    #define saturateMediump(x) min(x, MEDIUMP_FLT_MAX)
+""".trimIndent()
+
 val random = """
+    $randomFunc
+    $commonDefine
     $randomFunc3
 """.trimIndent()
