@@ -5,7 +5,7 @@ import org.intellij.lang.annotations.Language
 @Language("glsl")
 val spherePlane = """
     Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(DIFFUSE, vec3(0.75), 0.0, 0.0, 0.0, false));
-    const int SPHERE_NUMS = 4;w
+    const int SPHERE_NUMS = 4;
     Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
             Sphere(vec3(-0.5, 0.25, 0.5), 0.25, Material(PBR_BRDF, vec3(1.0, 0.7, 0.5), 1.0, 0.05, 1.0, false)),
             Sphere(vec3(0.0, 0.25, 1.0), 0.25, Material(PBR_BRDF, vec3(0.8, 0.5, 0.5), 0.0, 0.8, 0.05, false)),
