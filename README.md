@@ -10,7 +10,7 @@ A simple realtime Path Tracer demo for android implemented with GLES 3.0
 
 Known problems:
 
-- after about 1000 times samples, it may be occur some overfitting problems, may be because of the random function implemented in GLSL is not fully uniform distributionr  
+- after about 1000 times samples, it may be occur some overfitting problems, may be because of the distribution of random function implemented in GLSL is not truly uniform 
 
 TODO: 
 
