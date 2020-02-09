@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AndroidRayTracing</string>
+    <string name="cornell_box">Cornell Box</string>
+    <string name="pbr_sphere">PBR Sphere</string>
 </resources>

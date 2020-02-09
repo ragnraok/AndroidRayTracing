@@ -19,6 +19,9 @@ val cornellBox = """
         Sphere(vec3(0.1, -0.75, 0.5), 0.25, mirrorMaterial)
     );
     
+    PointLight pointLight = PointLight(vec3(-0.5, 1.0, 0.5), 0.1, vec3(0.5), 2.0);
+    DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(0.5));
+    
     // scene intersect
     $intersectSceneFuncHead {
         float t = ${PassVariable.infinity};

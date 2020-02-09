@@ -28,6 +28,8 @@ val outputFs = """
     in vec2 TexCoords;
     uniform sampler2D texture;
     
+    uniform int toneMapping;
+    
     vec3 toneMap(vec3 src) {
     	vec3 color = src / (1.0 + src);
     	color = pow(color,vec3(1.0/2.2,1.0/2.2,1.0/2.2));
@@ -36,7 +38,9 @@ val outputFs = """
 
     void main() {
         vec3 color = texture(texture, TexCoords).rgb;
-        color = toneMap(color);
+        if (toneMapping == 1) {
+            color = toneMap(color);
+        }
         FragColor = vec4(color, 1.0);
     }
 """.trimIndent()
@@ -120,7 +124,7 @@ val traceLoop = """
             // light color
             vec3 radiance = vec3(0.0);
             
-            vec3 pointLightColor = pointLight.color * pointLightAttenuation(pointLight, intersect.hit);
+            vec3 pointLightColor = pointLight.color * pointLightAttenuation(pointLight, intersect.hit) * pointLight.intensity;
             vec3 directionLightColor = directionLight.color;
             
             if (intersect.material.type == PBR_BRDF) {
@@ -168,16 +172,9 @@ val commonDataFunc = """
     $skybox
 """.trimIndent()
 
-// currently all scene only contains one pointLight and one directionLight
-// and only directionLight cast shadow
 @Language("glsl")
-val lightDecl = """
-    PointLight pointLight = PointLight(vec3(-0.5, 1.0, 0.5), 0.1, vec3(1.0));
-    DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(0.75));
-""".trimIndent()
-
-@Language("glsl")
-val tracerFs = """
+val tracerFs = { scene: String ->
+    """
     #version 300 es
     precision highp float;
     precision highp int;
@@ -196,10 +193,8 @@ val tracerFs = """
     uniform sampler2D skybox; // background skybox
     
     $commonDataFunc
-
-    $lightDecl
     
-    $spherePlane
+    $scene
     
     $shadow
 
@@ -215,3 +210,4 @@ val tracerFs = """
     }
     
 """
+}

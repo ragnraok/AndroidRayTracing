@@ -79,6 +79,7 @@ val pointLight = """
         vec3 position;
         float radius;
         vec3 color;
+        float intensity;
     };
 """.trimIndent()
 

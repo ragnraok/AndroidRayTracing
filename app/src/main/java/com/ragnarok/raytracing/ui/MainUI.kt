@@ -1,0 +1,30 @@
+package com.ragnarok.raytracing.ui
+
+import android.content.Intent
+import android.os.Bundle
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
+import com.ragnarok.raytracing.R
+import com.ragnarok.raytracing.renderer.Scenes
+
+class MainUI : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_mainui)
+
+        val intent = Intent()
+        intent.setClass(this, SceneRenderUI::class.java)
+
+        findViewById<Button>(R.id.cornell_box).setOnClickListener {
+            intent.putExtra(SceneRenderUI.SCENE, Scenes.CORNELL_BOX)
+            startActivity(intent)
+        }
+
+        findViewById<Button>(R.id.pbr_sphere).setOnClickListener {
+            intent.putExtra(SceneRenderUI.SCENE, Scenes.PBR_SPHERE)
+            startActivity(intent)
+        }
+    }
+
+}

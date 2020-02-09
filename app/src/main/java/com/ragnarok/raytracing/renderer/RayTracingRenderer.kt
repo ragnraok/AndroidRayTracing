@@ -14,7 +14,7 @@ import rangarok.com.androidpbr.utils.*
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class RayTracingRenderer(private val context: Context) : GLSurfaceView.Renderer {
+class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceView.Renderer {
 
     companion object {
         const val TAG = "RayTracingRenderer"
@@ -32,13 +32,35 @@ class RayTracingRenderer(private val context: Context) : GLSurfaceView.Renderer 
 
     private var hdrTex: Int = 0
 
-    private val camera = Camera(Vec3(0.0, 2.0, 3.0))
-
-//    private val camera = Camera(Vec3(0.0, 0.0, 3.0))
+    private val camera: Camera
 
     private val textures = IntArray(2)
 
     private var renderCount = 0
+
+    private val fs: String
+
+    private var needToneMapping = false
+
+    init {
+        when (scene) {
+            Scenes.CORNELL_BOX -> {
+                camera = Camera(Vec3(0.0, 0.0, 3.0))
+                fs = tracerFs(cornellBox)
+                needToneMapping = false
+            }
+            Scenes.PBR_SPHERE -> {
+                camera = Camera(Vec3(0.0, 2.0, 3.0))
+                fs = tracerFs(spherePlane)
+                needToneMapping = true
+            }
+            else -> {
+                camera = Camera(Vec3(0.0, 0.0, 3.0))
+                fs = tracerFs(cornellBox)
+            }
+
+        }
+    }
 
     override fun onDrawFrame(gl: GL10?) {
         clearGL()
@@ -65,7 +87,7 @@ class RayTracingRenderer(private val context: Context) : GLSurfaceView.Renderer 
 
         textures.fill(0)
         gen2DTextures(textures)
-        rayTracingShader = Shader(tracerVs, tracerFs)
+        rayTracingShader = Shader(tracerVs, fs)
 
         pingRenderer = SceneRenderer(rayTracingShader, camera, skyboxTex = hdrTex, outputTex = textures[0])
         pongRenderer = SceneRenderer(rayTracingShader, camera, skyboxTex = hdrTex, outputTex = textures[1])
@@ -98,6 +120,8 @@ class RayTracingRenderer(private val context: Context) : GLSurfaceView.Renderer 
                 GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, outputTex)
                 setInt("texture", 0)
+
+                setInt("toneMapping", if (needToneMapping) 1 else 0)
                 outputRenderer?.render()
 
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)

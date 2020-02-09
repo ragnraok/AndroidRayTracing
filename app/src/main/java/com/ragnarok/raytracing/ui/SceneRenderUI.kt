@@ -12,7 +12,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.ragnarok.raytracing.R
 import com.ragnarok.raytracing.renderer.RayTracingRenderer
 
-class MainActivity : AppCompatActivity() {
+class SceneRenderUI : AppCompatActivity() {
+
+    companion object {
+        const val SCENE = "key_scene"
+    }
 
     private lateinit var surfaceView: GLSurfaceView
     private lateinit var infoTextView: TextView
@@ -28,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_scene_render_ui)
 
         actionBar?.hide()
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -36,7 +40,8 @@ class MainActivity : AppCompatActivity() {
         surfaceView = findViewById(R.id.surfaceview)
         infoTextView = findViewById(R.id.info_tv)
 
-        renderer = RayTracingRenderer(this)
+        val scene = intent.getIntExtra(SCENE, 0)
+        renderer = RayTracingRenderer(this, scene)
         surfaceView.setEGLContextClientVersion(3)
         surfaceView.setRenderer(renderer)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
