@@ -172,9 +172,9 @@ val commonDataFunc = """
     $skybox
 """.trimIndent()
 
-@Language("glsl")
 val tracerFs = { scene: String ->
-    """
+    @Language("glsl")
+    val shader = """
     #version 300 es
     precision highp float;
     precision highp int;
@@ -209,5 +209,6 @@ val tracerFs = { scene: String ->
         FragColor = vec4(mix(color, previousColor, weight), 1.0);
     }
     
-"""
+    """
+    shader
 }
