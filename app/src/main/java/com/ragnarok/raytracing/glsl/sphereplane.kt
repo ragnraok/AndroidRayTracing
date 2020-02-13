@@ -16,8 +16,8 @@ val spherePlane = """
         Sphere(vec3(0.75, 0.25, 0.25), 0.25, Material(PBR_BRDF, vec3(0.78, 0.78, 0.0), 0.05, 1.0, 1.0, false)),
         
         Sphere(vec3(-0.75, 0.25, 1.25), 0.25, Material(PBR_BRDF, vec3(0.8, 0.5, 0.5), 0.05, 0.05, 0.3, false)),
-        Sphere(vec3(0.0, 0.25, 1.25), 0.25, Material(PBR_BRDF, vec3(0.8, 0.7, 0.5), 0.05, 0.05, 0.6, false)),
-        Sphere(vec3(0.75, 0.25, 1.25), 0.25, Material(PBR_BRDF, vec3(0.8, 1.0, 0.5), 0.05, 0.05, 1.0, false))
+        Sphere(vec3(0.0, 0.25, 1.25), 0.25, Material(PBR_BRDF, vec3(0.8, 0.7, 0.5), 0.5, 0.05, 0.6, false)),
+        Sphere(vec3(0.75, 0.25, 1.25), 0.25, Material(PBR_BRDF, vec3(0.8, 1.0, 0.5), 1.0, 0.05, 1.0, false))
     );
     
     PointLight pointLight = PointLight(vec3(0.0, 1.0, 0.5), 0.1, vec3(1.0), 5.0);
