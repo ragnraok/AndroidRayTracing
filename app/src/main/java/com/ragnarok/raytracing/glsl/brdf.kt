@@ -265,6 +265,7 @@ val brdfRayDir = """
 
 @Language("glsl")
 val samplePointLight = """
+    // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling.html#MultipleImportanceSampling
     float powerHeuristic(float a, float b) {
         float t = a * a;
         return t / (b*b + t);
