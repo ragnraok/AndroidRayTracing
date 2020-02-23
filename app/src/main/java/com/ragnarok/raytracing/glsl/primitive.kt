@@ -31,6 +31,7 @@ val material = """
         float roughness;
         float specular;
         bool glass;
+        float glassRatio;
     };
 """.trimIndent()
 

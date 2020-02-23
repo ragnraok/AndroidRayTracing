@@ -98,7 +98,7 @@ val traceLoop = """
                 if (lightIntersect.nearFar.x > 0.0 && lightIntersect.nearFar.x < intersect.t) {
                     float t = lightIntersect.nearFar.x;
                     float lightPdf = (t * t) / (4.0 * $pi * pointLight.radius * pointLight.radius);
-                    vec3 color = samplePointLight(pass, false, pdf, lightPdf, pointLight.color);
+                    vec3 color = samplePointLight(pass, intersect.material.glass, pdf, lightPdf, pointLight.color);
                     finalColor += color * colorMask * ambient;
                 } else {
                     finalColor += ambient * colorMask;
@@ -114,6 +114,7 @@ val traceLoop = """
             float shadow = 1.0;
             float specular = 0.0;
             bool isBRDFDiffuseRay = false;
+            bool isGlassRay = false;
             material = intersect.material;
             vec3 color = material.color;
             
@@ -130,16 +131,20 @@ val traceLoop = """
             if (intersect.material.type == PBR_BRDF) {
                 ray.pbrBRDF = true;
                 newRay.pbrBRDF = true;
-                newRay.pbrDiffuseRay = isBRDFDiffuseRay;
-                vec3 viewDir = normalize(ray.origin - intersect.hit);
-                // point light and direction light color
-                radiance += brdfLightColor(intersect.normal, pointLightDir, viewDir, pointLightColor, intersect.material);
-                radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
-                
-                // material diffuse and specular color
-                colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
-                pdf = brdfMaterialPdf(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
-                finalColor += colorMask * (radiance * shadow);
+                if (intersect.material.glass == false) {
+                    newRay.pbrDiffuseRay = isBRDFDiffuseRay;
+                    vec3 viewDir = normalize(ray.origin - intersect.hit);
+                    // point light and direction light color
+                    radiance += brdfLightColor(intersect.normal, pointLightDir, viewDir, pointLightColor, intersect.material);
+                    radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
+                    
+                    // material diffuse and specular color
+                    colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
+                    pdf = brdfMaterialPdf(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
+                    finalColor += colorMask * (radiance * shadow);
+                } else {
+                    colorMask *= (intersect.material.color);
+                }
             } else {
                 // diffuse
                 colorMask *= color;

@@ -99,8 +99,13 @@ val materialRay = """
 //            vec3 viewDir = normalize(reflect(ray.direction, intersection.normal));
             vec3 viewDir = normalize(ray.origin - intersection.hit);
             bool isDiffuse = false;
-            ray.direction = brdfRayDir(intersection.normal, viewDir, intersection.material, bias, isDiffuse);
-            isBRDFDiffuseRay = isDiffuse;
+            if (intersection.material.glass == false) {
+                ray.direction = brdfRayDir(intersection.normal, viewDir, intersection.material, bias, isDiffuse);
+                isBRDFDiffuseRay = isDiffuse;
+            } else {
+                ray.direction = btdfRayDir(intersection.normal, intersection.material, bias, ray);
+                isBRDFDiffuseRay = false;
+            }
         }
         return ray;
     }

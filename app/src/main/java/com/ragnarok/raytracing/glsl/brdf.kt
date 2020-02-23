@@ -283,6 +283,46 @@ val samplePointLight = """
     }
 """.trimIndent()
 
+@Language("glsl")
+val btdfRayDir = """
+    float SchlickFresnelFloat(float u) { // F0 is 1.0
+        float m = clamp(1.0 - u, 0.0, 1.0);
+        float m2 = m * m;
+        return m2 * m2*m; // pow(m,5)
+    }
+    
+    vec3 btdfRayDir(vec3 N, Material material, int bias, Ray ray) {
+        float glass = material.glassRatio;
+        
+        vec3 ffnormal = dot(N, ray.direction) <= 0.0 ? N : N * -1.0;
+        float n1 = 1.0;
+        float n2 = glass;
+        float R0 = (n1 - n2) / (n1 + n2);
+        R0 *= R0;
+        float theta = dot(-ray.direction, ffnormal);
+        float prob =  R0 + (1.0 - R0) * SchlickFresnelFloat(theta);
+        vec3 dir;
+    
+    
+        float eta = dot(N, ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
+        vec3 transDir = normalize(refract(ray.direction, ffnormal, eta));
+        float cos2t = 1.0 - eta * eta * (1.0 - theta * theta);
+    
+    
+        if (cos2t < 0.0 || random(bias) < prob) // Reflection
+        {
+            dir = normalize(reflect(ray.direction, ffnormal));
+        }
+        else
+        {
+            dir = transDir;
+            //dir = ImportanceSampleGGX(0.3,dir,vec2(rand(),rand()));
+        }
+    
+        return dir;
+    }
+""".trimIndent()
+
 val brdf = """
     $DFG
     $brdfLightColor
@@ -292,4 +332,5 @@ val brdf = """
     $brdfMaterialPdf
     $brdfRayDir
     $samplePointLight
+    $btdfRayDir
 """.trimIndent()
