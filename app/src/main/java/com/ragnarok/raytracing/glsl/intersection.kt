@@ -54,7 +54,7 @@ val intersectSphere = """
 @Language("glsl")
 val normalForSphere = """
     vec3 normalForSphere(vec3 hit, Sphere sphere) {
-        return (hit - sphere.center) / sphere.radius;
+        return normalize(hit - sphere.center);
     }
 """.trimIndent()
 

@@ -50,8 +50,8 @@ class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceVi
                 needToneMapping = false
             }
             Scenes.PBR_SPHERE -> {
-                camera = Camera(Vec3(0.0, 2.5, 3.0))
-                fs = tracerFs(spherePlane)
+                camera = Camera(Vec3(0.0, 0.25, 3.0))
+                fs = tracerFs(glassMaterials)
                 needToneMapping = true
             }
             else -> {
@@ -83,7 +83,7 @@ class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceVi
 
     private fun initRenderer() {
 
-        hdrTex = uploadTexture(context, "envs/newport_loft.png")
+        hdrTex = uploadTexture(context, "envs/hdr_show_011.png")
 
         textures.fill(0)
         gen2DTextures(textures)

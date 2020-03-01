@@ -89,20 +89,21 @@ val traceLoop = """
         Intersection lastIntersect;
         Ray lastRay;
         float pdf = 1.0;
+        bool specularBounce = false;
         for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
             Intersection intersect = intersectScene(ray);
             
             if (intersect.t == $infinity) {
                 vec3 ambient = getSkyboxColorByRay(ray);
-                Intersection lightIntersect = intersectPointLight(ray, pointLight);
-                if (lightIntersect.nearFar.x > 0.0 && lightIntersect.nearFar.x < intersect.t) {
-                    float t = lightIntersect.nearFar.x;
-                    float lightPdf = (t * t) / (4.0 * $pi * pointLight.radius * pointLight.radius);
-                    vec3 color = samplePointLight(pass, intersect.material.glass, pdf, lightPdf, pointLight.color);
-                    finalColor += color * colorMask * ambient;
-                } else {
+//                Intersection lightIntersect = intersectPointLight(ray, pointLight);
+//                if (lightIntersect.nearFar.x > 0.0 && lightIntersect.nearFar.x < intersect.t) {
+//                    float t = lightIntersect.nearFar.x;
+//                    float lightPdf = (t * t) / (4.0 * $pi * pointLight.radius * pointLight.radius);
+//                    vec3 color = samplePointLight(pass, specularBounce, pdf, lightPdf, pointLight.color);
+//                    finalColor += color * colorMask * ambient;
+//                } else {
                     finalColor += ambient * colorMask;
-                }
+//                }
                 break;
             }
             
@@ -142,13 +143,16 @@ val traceLoop = """
                     colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
                     pdf = brdfMaterialPdf(intersect.normal, -ray.direction, newRay.origin, intersect.material, isBRDFDiffuseRay);
                     finalColor += colorMask * (radiance * shadow);
+                    specularBounce = false;
                 } else {
-                    colorMask *= (intersect.material.color);
+                    colorMask *= intersect.material.color;
+                    pdf = 1.0;
+                    specularBounce = true;
                 }
             } else {
                 // diffuse
                 colorMask *= color;
-                
+
                 // point light and direction light color
                 float pointNdotL = max(dot(intersect.normal, -pointLightDir), 0.0);
                 float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
@@ -159,10 +163,12 @@ val traceLoop = """
                 finalColor += colorMask * specular * shadow;
                 
                 pdf = 1.0;
+                specularBounce = false;
             }
             
             lastRay = ray;
-            newRay.origin = intersect.hit;
+//            newRay.origin = intersect.hit;
+            newRay.origin = intersect.hit + newRay.direction * 0.05;
             ray = newRay;
         }
         return finalColor;
