@@ -4,21 +4,18 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val glassMaterials = """
-        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(PBR_BRDF, vec3(0.7), 0.0, 0.0, 0.0, false, 0.0));
-        const int SPHERE_NUMS = 3;
+        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(PBR_BRDF, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0));
+        const int SPHERE_NUMS = 1;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-            Sphere(vec3(0.5, 0.3, -1.0), 0.3, Material(PBR_BRDF, vec3(0.75), 0.05, 0.6, 1.0, true, 0.5)),
-            Sphere(vec3(0.0, 0.3, 0.0), 0.3, Material(PBR_BRDF, vec3(0.75), 0.05, 0.6, 1.0, true, 1.0)),
-            Sphere(vec3(-0.5, 0.3, 1.0), 0.3, Material(PBR_BRDF, vec3(0.75), 0.05, 0.6, 1.0, true, 1.5))
-        );
+            Sphere(vec3(0.0, 0.3, 0.3), 0.3, Material(PBR_BRDF, vec3(1.0), 0.01, 0.06, 1.0, true, 1.1))
+        ); 
         
-        const int BOX_NUMS = 2;
+        const int BOX_NUMS = 1;
         Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-            Cube(vec3(-1.0, 0.0, -1.0), vec3(-0.3, 0.5, -0.3), Material(PBR_BRDF, vec3(1.0, 0.0, 0.0), 0.05, 0.6, 1.0, true, 0.5)),
-            Cube(vec3(0.5, 0.0, 0.75), vec3(0.8, 0.6, 1.0), Material(PBR_BRDF, vec3(0.0, 1.0, 1.0), 0.05, 0.6, 1.0, true, 0.5))
+            Cube(vec3(-0.5, 0.0, -0.3), vec3(0.0, 0.5, 0.3), Material(PBR_BRDF, vec3(1.0), 0.05, 0.6, 1.0, true, 1.02))
         );
         
-        PointLight pointLight = PointLight(vec3(0.0, 1.0, 0.5), 0.1, vec3(1.0), 5.0);
+        PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 5.0);
         DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(0.75));
             
         $intersectSceneFuncHead {
@@ -84,6 +81,13 @@ val glassMaterials = """
                     shadow = 0.0;
                 }   
             }
+            
+//            for (int i = 0; i < BOX_NUMS; i++) {
+//                intersect = intersectCube(shadowRay, boxCubes[i]);
+//                if (intersect.nearFar.x < 1.0) {
+//                    shadow = 0.0;
+//                } 
+//            }
 
             return shadow;
         }

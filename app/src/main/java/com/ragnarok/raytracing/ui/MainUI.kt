@@ -25,6 +25,11 @@ class MainUI : AppCompatActivity() {
             intent.putExtra(SceneRenderUI.SCENE, Scenes.PBR_SPHERE)
             startActivity(intent)
         }
+
+        findViewById<Button>(R.id.glass).setOnClickListener {
+            intent.putExtra(SceneRenderUI.SCENE, Scenes.GLASS)
+            startActivity(intent)
+        }
     }
 
 }

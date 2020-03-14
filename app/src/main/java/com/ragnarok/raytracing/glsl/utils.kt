@@ -32,6 +32,16 @@ val randomFunc3 = """
 """.trimIndent()
 
 @Language("glsl")
+val ranomdFunc4 = """
+    vec2 seed;
+    uniform vec2 ran;
+    float randSeed(){
+        seed -= vec2(ran.x * ran.y);
+        return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+""".trimIndent()
+
+@Language("glsl")
 const val randomVec1a = "vec2(gl_FragCoord.x + time, gl_FragCoord.y + time)"
 
 @Language("glsl")
@@ -51,7 +61,7 @@ val commonDefine = """
 """.trimIndent()
 
 val random = """
-    $randomFunc
-    $commonDefine
     $randomFunc3
+    $commonDefine
+    $ranomdFunc4
 """.trimIndent()

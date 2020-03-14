@@ -96,14 +96,13 @@ val materialRay = """
             specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
             specular = 2.0 * specular;
         } else if (intersection.material.type == PBR_BRDF) {
-//            vec3 viewDir = normalize(reflect(ray.direction, intersection.normal));
             vec3 viewDir = normalize(ray.origin - intersection.hit);
             bool isDiffuse = false;
             if (intersection.material.glass == false) {
                 ray.direction = brdfRayDir(intersection.normal, viewDir, intersection.material, bias, isDiffuse);
                 isBRDFDiffuseRay = isDiffuse;
             } else {
-                ray.direction = btdfRayDir(intersection.normal, intersection.material, bias, ray);
+                ray.direction = btdfRayDir(intersection.normal, intersection.material, bias, ray.direction);
                 isBRDFDiffuseRay = false;
             }
         }

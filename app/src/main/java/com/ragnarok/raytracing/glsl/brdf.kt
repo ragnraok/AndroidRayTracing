@@ -247,7 +247,7 @@ val brdfRayDir = """
         vec3 tangentX = normalize(cross(up, N));
         vec3 tangentY = normalize(cross(tangentX, N));
         
-        if (random(frame) < diffuseRatio) {
+        if (randSeed() < diffuseRatio) {
             // diffuse irradiance sample
             dir = CosineSampleHemisphere(u, v);
             dir = tangentX * dir.x  + tangentY * dir.y + N * dir.z;
@@ -291,31 +291,34 @@ val btdfRayDir = """
         return m2 * m2*m; // pow(m,5)
     }
     
-    vec3 btdfRayDir(vec3 N, Material material, int bias, Ray ray) {
+     float SchlickFresnelFloatR0(float cosTheta, float R0) { // F0 is 1.0
+        return mix(SchlickFresnelFloat(cosTheta), 1.0, R0);
+    }
+    
+    vec3 btdfRayDir(vec3 N, Material material, int bias, vec3 viewDir) {
         float glass = material.glassRatio;
         
-        vec3 ffnormal = dot(N, ray.direction) <= 0.0 ? N : N * -1.0;
+        vec3 ffnormal = dot(N, viewDir) <= 0.0 ? N : N * -1.0;
         float n1 = 1.0;
-        float n2 = 1.5;
+        float n2 = glass;
         float R0 = (n1 - n2) / (n1 + n2);
         R0 *= R0;
-        float theta = dot(ray.direction * -1.0, ffnormal);
-        float prob = R0 + (1.0 - R0) * SchlickFresnelFloat(theta);
+        float theta = dot(viewDir * -1.0, ffnormal);
+        float prob = SchlickFresnelFloatR0(theta, R0 * R0);
         vec3 dir;
     
     
         float eta = dot(N, ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
-        float cos2t = 1.0 - eta * eta * (1.0 - theta * theta);
     
     
         // something wrong here
-        if (cos2t < 0.0 || random(bias) < prob) // Reflection
+        if (random(bias) < prob) // Reflection
         {
-            dir = normalize(reflect(ray.direction, ffnormal));
+            dir = normalize(reflect(viewDir, ffnormal));
         }
         else
         {
-            dir = normalize(refract(ray.direction, ffnormal, eta)); 
+            dir = normalize(refract(viewDir, ffnormal, eta)); 
         }
         
         return dir;

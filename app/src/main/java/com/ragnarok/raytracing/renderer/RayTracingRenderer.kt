@@ -45,17 +45,22 @@ class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceVi
     init {
         when (scene) {
             Scenes.CORNELL_BOX -> {
-                camera = Camera(Vec3(0.0, 0.0, 3.0))
+                camera = Camera(Vec3(0.0, 0.0, 2.5), 30.0f)
                 fs = tracerFs(cornellBox)
                 needToneMapping = false
             }
             Scenes.PBR_SPHERE -> {
-                camera = Camera(Vec3(0.0, 0.25, 3.0))
+                camera = Camera(Vec3(0.0, 1.5, 3.0), 60.0f)
+                fs = tracerFs(spherePlane)
+                needToneMapping = true
+            }
+            Scenes.GLASS -> {
+                camera = Camera(Vec3(0.0, 0.35, 1.5), 30.0f)
                 fs = tracerFs(glassMaterials)
                 needToneMapping = true
             }
             else -> {
-                camera = Camera(Vec3(0.0, 0.0, 3.0))
+                camera = Camera(Vec3(0.0, 0.0, 3.0), 30.0f)
                 fs = tracerFs(cornellBox)
             }
 
@@ -83,7 +88,7 @@ class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceVi
 
     private fun initRenderer() {
 
-        hdrTex = uploadTexture(context, "envs/hdr_show_011.png")
+        hdrTex = uploadTexture(context, "envs/newport_loft.png")
 
         textures.fill(0)
         gen2DTextures(textures)
@@ -100,11 +105,12 @@ class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceVi
 
     private fun renderFrame() {
         // render ray tracing scene
-        val projection = glm.perspective(glm.radians(camera.zoom), (PassVariable.eachPassOutputWidth/PassVariable.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
-        val view = camera.lookAt(Vec3(0))
+//        val projection = glm.perspective(glm.radians(camera.zoom), (PassVariable.eachPassOutputWidth/PassVariable.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
+//        val view = camera.lookAt(Vec3(0))
 
-        pingRenderer?.render(projection, view, pongRenderer?.outputTex?:0, renderCount)
-        pongRenderer?.render(projection, view, pingRenderer?.outputTex?:0, renderCount)
+        val center = Vec3(0)
+        pingRenderer?.render(camera, center, pongRenderer?.outputTex?:0, renderCount)
+        pongRenderer?.render(camera, center, pingRenderer?.outputTex?:0, renderCount)
 
         renderCount++
 
