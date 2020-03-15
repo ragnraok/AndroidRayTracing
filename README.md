@@ -14,7 +14,7 @@ Known problems:
 
 TODO: 
 
-- BSDF support
+- ~~BTDF support~~
 
 - Depth of Field  
 
@@ -27,3 +27,7 @@ Cornell Box:
 PBR Sphere:
 
 ![](pbr_sphere.png)
+
+Glass:
+
+![](glass.png)
