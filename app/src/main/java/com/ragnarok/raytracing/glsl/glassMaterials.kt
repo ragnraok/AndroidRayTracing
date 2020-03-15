@@ -7,12 +7,12 @@ val glassMaterials = """
         Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(PBR_BRDF, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0));
         const int SPHERE_NUMS = 1;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-            Sphere(vec3(0.0, 0.3, 0.3), 0.3, Material(PBR_BRDF, vec3(1.0), 0.01, 0.06, 1.0, true, 1.1))
+            Sphere(vec3(-0.3, 0.3, 0.3), 0.3, Material(PBR_BRDF, vec3(1.0), 0.01, 0.06, 1.0, true, 1.05))
         ); 
         
         const int BOX_NUMS = 1;
         Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-            Cube(vec3(-0.5, 0.0, -0.3), vec3(0.0, 0.5, 0.3), Material(PBR_BRDF, vec3(1.0), 0.05, 0.6, 1.0, true, 1.02))
+            Cube(vec3(0.2, 0.0, 0.3), vec3(0.5, 0.5, 0.6), Material(PBR_BRDF, vec3(0.75), 0.05, 0.6, 1.0, true, 1.5))
         );
         
         PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 5.0);
@@ -45,15 +45,15 @@ val glassMaterials = """
                 }
             }
             
-//            for (int i = 0; i < BOX_NUMS; i++) {
-//                intersect = intersectCube(ray, boxCubes[i]);
-//                if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
-//                    t = intersect.nearFar.x;
-//                    hit = pointAt(ray, t);
-//                    normal = normalForCube(hit, boxCubes[i]);
-//                    material = boxCubes[i].material;
-//                }
-//            }
+            for (int i = 0; i < BOX_NUMS; i++) {
+                intersect = intersectCube(ray, boxCubes[i]);
+                if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
+                    t = intersect.nearFar.x;
+                    hit = pointAt(ray, t);
+                    normal = normalForCube(hit, boxCubes[i]);
+                    material = boxCubes[i].material;
+                }
+            }
             
                 
             intersect.t = t;
@@ -74,14 +74,14 @@ val glassMaterials = """
             Intersection intersect;
             float shadow = 1.0;
             
-            for (int i = 0; i < SPHERE_NUMS; i++) {
-                intersect = intersectSphere(shadowRay, spheres[i]);
-
-                if (intersect.nearFar.x < 1.0) {
-                    shadow = 0.0;
-                }   
-            }
-            
+//            for (int i = 0; i < SPHERE_NUMS; i++) {
+//                intersect = intersectSphere(shadowRay, spheres[i]);
+//
+//                if (intersect.nearFar.x < 1.0) {
+//                    shadow = 0.0;
+//                }   
+//            }
+//            
 //            for (int i = 0; i < BOX_NUMS; i++) {
 //                intersect = intersectCube(shadowRay, boxCubes[i]);
 //                if (intersect.nearFar.x < 1.0) {

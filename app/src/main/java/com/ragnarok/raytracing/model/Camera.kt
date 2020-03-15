@@ -46,18 +46,8 @@ class Camera {
         return glm.lookAt(position, center, Vec3(0, 1, 0))
     }
 
-    fun getWorldMatrix(center: Vec3): Mat4 {
-        return Mat4(1.0) * glm.translate(Mat4(1.0), position - center)
-//        * glm.lookAt(position, center, Vec3(0, 1, 0))
-    }
-
-    fun getCameraOrthoNormalBasis(center: Vec3): Array<Vec3> {
-        var n = Vec3(position.x - center.x, position.y - center.y, position.z - center.z)
-        n = glm.normalize(n)
-        var i = Vec3(0, 1, 0).cross(n)
-        var o = n.cross(i)
-        o = glm.normalize(o)
-        return arrayOf(i, o, n)
+    fun getWorldMatrix(eye: Vec3): Mat4 {
+        return glm.lookAt(position, eye, Vec3(0, 1, 0)).inverse()
     }
 
     fun getVerticalFovRadian(): Float {
