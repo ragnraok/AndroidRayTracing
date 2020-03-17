@@ -16,7 +16,6 @@ val glassMaterials = """
         );
         
         PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 5.0);
-        DirectionLight directionLight = DirectionLight(normalize(vec3(0) - vec3(-1.0, 1.0, 1.0)), vec3(0.75));
             
         $intersectSceneFuncHead {
             float t = ${PassVariable.infinity};

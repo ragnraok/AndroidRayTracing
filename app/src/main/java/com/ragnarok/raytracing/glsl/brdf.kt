@@ -166,6 +166,7 @@ val brdfMaterialColor = """
         float NdotL = max(0.0, dot(N, L));
         float NdotH = max(0.0, dot(N, H));
         float VdotH = max(0.0, dot(V, H));
+        float NdotV = max(0.0, dot(N, V));
 
         vec3 color = vec3(0);
         
@@ -191,7 +192,7 @@ val brdfMaterialColor = """
             specular *= NdotL;
 
 //            vec3 nominator    = NDF * G * F;
-//            float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+//            float denominator = 4.0 * NdotV * NdotL;
 //            vec3 specularColor = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
 
             color = specularColor;
@@ -235,7 +236,7 @@ val brdfMaterialPdf = """
 val brdfRayDir = """
     vec3 brdfRayDir(vec3 N, vec3 V, Material material, int bias, out bool isDiffuseRay) {
         float u = random(bias);
-        float v = random(0);
+        float v = random(frame);
         vec2 uv = vec2(u, v);
         
         float metallic = material.metallic;
@@ -256,7 +257,7 @@ val brdfRayDir = """
             return dir;
         } else {
             // specular radiance sample
-            dir = ImportanceSampleGGX(uv, N, roughness);
+            dir = ImportanceSampleGGX(uv, V, roughness);
             isDiffuseRay = false;
             return dir;
         }

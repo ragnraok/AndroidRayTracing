@@ -80,11 +80,12 @@ val tracerVs = """
 // main path tracing loop
 @Language("glsl")
 val traceLoop = """
+    //TODO: optimize light calculation
     vec3 calcColor(Ray ray) {
         vec3 colorMask = vec3(1.0);
         vec3 finalColor = vec3(0.0);
         
-        vec3 directionDir = directionLightDir(directionLight);
+//        vec3 directionDir = directionLightDir(directionLight);
         vec3 pointDir = pointLightDir(pointLight);
         
         Material material;
@@ -112,7 +113,7 @@ val traceLoop = """
             lastIntersect = intersect;
             vec3 pointLightDir = intersect.hit - pointDir; // point light to intersection
 
-            vec3 directionLightDir = -directionDir;
+//            vec3 directionLightDir = -directionDir;
             
             float shadow = 1.0;
             float specular = 0.0;
@@ -121,25 +122,25 @@ val traceLoop = """
             material = intersect.material;
             vec3 color = material.color;
             
-            Ray newRay = materialRay(ray, intersect, directionLightDir, pass, specular, isBRDFDiffuseRay);
+            Ray newRay = materialRay(ray, intersect, pointLightDir, pass, specular, isBRDFDiffuseRay);
             
-            shadow = getShadow(intersect, directionLightDir);
+            shadow = getShadow(intersect, -pointLightDir);
             
             // light color
             vec3 radiance = vec3(0.0);
             
             vec3 pointLightColor = pointLight.color * pointLightAttenuation(pointLight, intersect.hit) * pointLight.intensity;
-            vec3 directionLightColor = directionLight.color;
+//            vec3 directionLightColor = directionLight.color;
             
             if (intersect.material.type == PBR_BRDF) {
                 ray.pbrBRDF = true;
                 newRay.pbrBRDF = true;
                 if (intersect.material.glass == false) {
                     newRay.pbrDiffuseRay = isBRDFDiffuseRay;
-                    vec3 viewDir = normalize(ray.origin - intersect.hit);
+                    vec3 viewDir = normalize(lastIntersect.hit - intersect.hit);
                     // point light and direction light color
-                    radiance += brdfLightColor(intersect.normal, pointLightDir, viewDir, pointLightColor, intersect.material);
-                    radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
+                    radiance += brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material);
+//                    radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
                     
                     // material diffuse and specular color
                     colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
@@ -157,9 +158,10 @@ val traceLoop = """
 
                 // point light and direction light color
                 float pointNdotL = max(dot(intersect.normal, -pointLightDir), 0.0);
-                float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
                 radiance = pointLightColor * pointNdotL;
-                radiance += directionLightColor * directionNdotL;
+                
+//                float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
+//                radiance += directionLightColor * directionNdotL;
                 
                 finalColor += colorMask * (radiance * shadow);
                 finalColor += colorMask * specular * shadow;
