@@ -222,8 +222,8 @@ val brdfMaterialPdf = """
             return NdotL / $pi;
         } else {
 //            baseColor = baseColor - baseColor * metallic;
-            vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
-            vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+//            vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
+//            vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
             
             float NDF = DistributionGGX(N, H, roughness);
             return NDF * NdotH / (4.0 * VdotH);
@@ -248,7 +248,7 @@ val brdfRayDir = """
         vec3 tangentX = normalize(cross(up, N));
         vec3 tangentY = normalize(cross(tangentX, N));
         
-        if (randSeed() < diffuseRatio) {
+        if (random(bias) < diffuseRatio) {
             // diffuse irradiance sample
             dir = CosineSampleHemisphere(u, v);
             dir = tangentX * dir.x  + tangentY * dir.y + N * dir.z;
