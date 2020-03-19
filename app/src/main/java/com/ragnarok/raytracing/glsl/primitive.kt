@@ -24,6 +24,7 @@ val material = """
     const int MIRROR = 2;
     const int GLOSSY = 3;
     const int PBR_BRDF = 4;
+    const int LIGHT = 5;
     struct Material {
         int type;
         vec3 color;

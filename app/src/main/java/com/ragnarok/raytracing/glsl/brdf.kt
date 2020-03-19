@@ -188,8 +188,8 @@ val brdfMaterialColor = """
             
             vec3 specularColor =  G * F;
             float ss = 4.0 * NdotL * VdotH / (VdotH + 0.001);
-            specular *= ss;
-            specular *= NdotL;
+            specularColor *= ss;
+            specularColor *= NdotL;
 
 //            vec3 nominator    = NDF * G * F;
 //            float denominator = 4.0 * NdotV * NdotL;

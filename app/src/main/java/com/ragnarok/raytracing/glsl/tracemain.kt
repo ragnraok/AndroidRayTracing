@@ -82,8 +82,8 @@ val tracerVs = """
 val traceLoop = """
     //TODO: optimize light calculation
     vec3 calcColor(Ray ray) {
-        vec3 colorMask = vec3(1.0);
-        vec3 finalColor = vec3(0.0);
+        vec3 radiance = vec3(0.0);
+        vec3 throughput = vec3(1.0);
         
 //        vec3 directionDir = directionLightDir(directionLight);
         vec3 pointDir = pointLightDir(pointLight);
@@ -93,21 +93,24 @@ val traceLoop = """
         Ray lastRay;
         float pdf = 1.0;
         bool specularBounce = false;
+        vec3 ambient = vec3(0.0);
         for (int pass = 0; pass < ${PassVariable.bounces}; pass++) {
+            Intersection lightIntersect = intersectPointLight(ray, pointLight);
             Intersection intersect = intersectScene(ray);
             
+            
             if (intersect.t == $infinity) {
-                vec3 ambient = getSkyboxColorByRay(ray);
-                Intersection lightIntersect = intersectPointLight(ray, pointLight);
+                ambient = getSkyboxColorByRay(ray);
                 if (lightIntersect.nearFar.x > 0.0 && lightIntersect.nearFar.x < intersect.t) {
                     float t = lightIntersect.nearFar.x;
                     float lightPdf = (t * t) / (4.0 * $pi * pointLight.radius * pointLight.radius);
                     vec3 color = samplePointLight(pass, specularBounce, pdf, lightPdf, pointLight.color);
-                    finalColor += color * colorMask * ambient;
-                } else {
-                    finalColor += ambient * colorMask;
-                    break;
+                    radiance += color * throughput * ambient;
+                    intersect = lightIntersect;
+                } else {       
+                    radiance += ambient * throughput;
                 }
+                break;
             }
             
             lastIntersect = intersect;
@@ -122,60 +125,56 @@ val traceLoop = """
             material = intersect.material;
             vec3 color = material.color;
             
-            Ray newRay = materialRay(ray, intersect, pointLightDir, pass, specular, isBRDFDiffuseRay);
+            Ray newRay = materialRay(ray, intersect, -pointLightDir, pass, specular, isBRDFDiffuseRay);
             
             shadow = getShadow(intersect, -pointLightDir);
-            
-            // light color
-            vec3 radiance = vec3(0.0);
             
             vec3 pointLightColor = pointLight.color * pointLightAttenuation(pointLight, intersect.hit) * pointLight.intensity;
 //            vec3 directionLightColor = directionLight.color;
             
-            if (intersect.material.type == PBR_BRDF) {
+            if (material.type == PBR_BRDF) {
                 ray.pbrBRDF = true;
                 newRay.pbrBRDF = true;
                 if (intersect.material.glass == false) {
                     newRay.pbrDiffuseRay = isBRDFDiffuseRay;
                     vec3 viewDir = normalize(lastIntersect.hit - intersect.hit);
                     // point light and direction light color
-                    radiance += brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material);
+                    vec3 pointLightColor = brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material) * throughput;
 //                    radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
                     
                     // material diffuse and specular color
-                    colorMask *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
+                    throughput *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
                     pdf = brdfMaterialPdf(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
-                    finalColor += colorMask * (radiance * shadow);
+                    radiance += throughput * pointLightColor * shadow;
                     specularBounce = false;
                 } else {
-                    colorMask *= intersect.material.color;
+                    throughput *= intersect.material.color;
                     pdf = 1.0;
                     specularBounce = true;
                 }
-            } else {
+            } else if (material.type == DIFFUSE || material.type == GLOSSY || material.type == MIRROR) {
                 // diffuse
-                colorMask *= color;
+                throughput *= color;
 
                 // point light and direction light color
                 float pointNdotL = max(dot(intersect.normal, -pointLightDir), 0.0);
-                radiance = pointLightColor * pointNdotL;
+                vec3 pointLightColor = pointLightColor * pointNdotL;
                 
 //                float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
 //                radiance += directionLightColor * directionNdotL;
                 
-                finalColor += colorMask * (radiance * shadow);
-                finalColor += colorMask * specular * shadow;
+                radiance += throughput * pointLightColor * shadow;
+                radiance += throughput * specular * shadow;
                 
                 pdf = 1.0;
                 specularBounce = false;
             }
             
             lastRay = ray;
-//            newRay.origin = intersect.hit;
-            newRay.origin = intersect.hit + newRay.direction * 0.05;
+            newRay.origin = intersect.hit + newRay.direction * ${PassVariable.eps};
             ray = newRay;
         }
-        return finalColor;
+        return max(radiance,vec3(0.0));
     }
 """.trimIndent()
 

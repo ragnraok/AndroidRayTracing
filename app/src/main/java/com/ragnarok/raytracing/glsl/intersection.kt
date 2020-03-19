@@ -86,6 +86,7 @@ val normalForPlane = """
 val intersectPointLight = """
     Intersection intersectPointLight(Ray ray, PointLight pointLight) {
         Material material;
+        material.type = LIGHT;
         Sphere pointLightSphere = Sphere(pointLight.position, pointLight.radius, material);
         Intersection intersect = intersectSphere(ray, pointLightSphere);
         return intersect;
