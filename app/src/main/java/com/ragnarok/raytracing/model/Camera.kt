@@ -9,6 +9,7 @@ import kotlin.math.tan
 
 class Camera {
 
+    // TODO: camera drag, dof support
     var position = Vec3(0)
     var front = Vec3(0, 0, -1)
     var up = Vec3(0, 1, 0)

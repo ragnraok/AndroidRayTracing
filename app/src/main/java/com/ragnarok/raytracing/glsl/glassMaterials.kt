@@ -4,7 +4,7 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val glassMaterials = """
-        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(PBR_BRDF, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0));
+        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(PBR_BRDF, vec3(0.5), 0.01, 1.0, 0.01, false, 0.0));
         const int SPHERE_NUMS = 1;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
             Sphere(vec3(-0.3, 0.3, 0.3), 0.3, Material(PBR_BRDF, vec3(1.0), 0.01, 0.06, 1.0, true, 1.05))
