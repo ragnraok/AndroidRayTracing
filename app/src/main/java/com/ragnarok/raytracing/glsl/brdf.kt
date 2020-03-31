@@ -49,6 +49,15 @@ val DFG = """
 
         return saturateMediump(ggx1 * ggx2);
     }
+    float Vis_Smith( float Roughness, float NoV, float NoL )
+    {
+        float a = Roughness * Roughness ;
+        float a2 = a*a;
+
+        float Vis_SmithV = NoV + sqrt( NoV * (NoV - NoV * a2) + a2 );
+        float Vis_SmithL = NoL + sqrt( NoL * (NoL - NoL * a2) + a2 );
+        return saturateMediump(1.0 / ( Vis_SmithV * Vis_SmithL ));
+    }
     // ----------------------------------------------------------------------------
     vec3 fresnelSchlick(float cosTheta, vec3 F0)
     {
@@ -82,24 +91,27 @@ val brdfLightColor = """
         float metallic = material.metallic;
         float specular = material.specular;
         
-//        vec3 F0 = vec3(0.04);
-//        F0 = mix(F0, baseColor, metallic);
+        vec3 F0 = vec3(0.08);
+        F0 = mix(F0, baseColor, metallic);
 //        baseColor = baseColor - baseColor * metallic;
-        vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
+//        vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
         
         vec3 H = normalize(V + L);
+        float NdotL = max(0.0, dot(N, L));
+        float NdotH = max(0.0, dot(N, H));
+        float VdotH = max(0.0, dot(V, H));
+        float NdotV = max(0.0, dot(N, V));
         
+        // specular = D*G*F / (4*NoL*NoV) 
+        //          = D*Vis*F
+        //      Vis = G / 4 * NdotL * NdotV        
         float NDF = DistributionGGX(N, H, roughness);
         float G = GeometrySmith(N, V, L, roughness);
-        vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+        vec3 F = fresnelSchlick(VdotH, F0);
 
         vec3 specularColor = NDF * G * F;
+        specularColor *= 4.0 * NdotL * NdotV / (NdotV + 0.001);
         
-
-        // scale light by NdotL
-        float NdotL = max(dot(N, L), 0.0);
-        
-//        vec3 diffuseColor = kD * baseColor / $pi;
         vec3 diffuseColor = baseColor / $pi;
         
         vec3 radiance = (diffuseColor + specularColor) * lightColor * NdotL;
@@ -170,12 +182,12 @@ val brdfMaterialColor = """
 
         vec3 color = vec3(0);
         
-//        vec3 F0 = vec3(0.04);
-//        F0 = mix(F0, baseColor, metallic);
+        vec3 F0 = vec3(0.08);
+        F0 = mix(F0, baseColor, metallic);
 //        baseColor = baseColor - baseColor * metallic;
 
-        vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
-        vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+//        vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
+        vec3 F = fresnelSchlick(VdotH, F0);
          
         
         if (diffuse) {
@@ -185,13 +197,17 @@ val brdfMaterialColor = """
         } else {
             float NDF = DistributionGGX(N, H, roughness);
             float G = GeometrySmith(N, V, L, roughness);
+            float Vis = Vis_Smith(roughness, NdotV, NdotL);
             
+            // specular = D*G*F / (4*NoL*NoV) 
+            //          = D*Vis*F
+            //      Vis = G / 4 * NdotL * NdotV
             vec3 specularColor =  G * F;
-            float ss = 4.0 * NdotL * VdotH / (VdotH + 0.001);
+            float ss = 4.0 * NdotL * NdotV / (NdotV + 0.001);
             specularColor *= ss;
             specularColor *= NdotL;
 
-//            vec3 nominator    = NDF * G * F;
+//            vec3 nominator    = NDF * Vis * F;
 //            float denominator = 4.0 * NdotV * NdotL;
 //            vec3 specularColor = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
 
@@ -221,10 +237,7 @@ val brdfMaterialPdf = """
         if (diffuse) {
             return NdotL / $pi;
         } else {
-//            baseColor = baseColor - baseColor * metallic;
-//            vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
-//            vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
-            
+
             float NDF = DistributionGGX(N, H, roughness);
             return NDF * NdotH / (4.0 * VdotH);
         }
