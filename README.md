@@ -12,12 +12,6 @@ Known problems:
 
 - after about 1000 times samples, it may be occur some overfitting problems, may be because of the distribution of random function implemented in GLSL is not truly uniform 
 
-TODO: 
-
-- ~~BTDF support~~
-
-- Depth of Field  
-
 ------
 
 Cornell Box: 
@@ -31,3 +25,7 @@ PBR Sphere:
 Glass:
 
 ![](glass.png)
+
+Depth Of Field
+
+![](depth_of_field.png)
