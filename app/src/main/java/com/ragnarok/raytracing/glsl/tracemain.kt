@@ -240,7 +240,11 @@ val tracerFs = { scene: String ->
         direction = normalize(direction);
         
         vec2 lensPoints = cameraAperture * sampleCircle(ran);
-        vec3 focusPoint = -direction * cameraFocusLength / direction.z; // intersect ray direction with focus plane
+        // intersect ray with focus plane
+        float t = cameraFocusLength / direction.z; // intersect ray distance t
+        // calculate the intersect point on focus plane
+        // note the inverse direction since the origin direction of the ray is point outward of the lens
+        vec3 focusPoint = -direction * t; 
         vec3 origin = vec3(lensPoints, 0.0);
         direction = normalize(focusPoint - origin);
         
