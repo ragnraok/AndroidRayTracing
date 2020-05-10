@@ -8,9 +8,17 @@ A simple realtime Path Tracer demo for android implemented with GLES 3.0
 
 - BRDF PBR material support, and IBL environment lighting
 
+- Depth of field
+
 Known problems:
 
 - after about 1000 times samples, it may be occur some overfitting problems, may be because of the distribution of random function implemented in GLSL is not truly uniform 
+
+### TODO:
+
+- Motion Blur
+- Texture Support
+- BVH && Model Loading
 
 ------
 
