@@ -9,10 +9,8 @@ import glm_.glm
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
-import glm_.vec4.Vec4
 import rangarok.com.androidpbr.utils.*
 import java.util.*
-import kotlin.math.max
 
 class SceneRenderer(private val shader: Shader?, private val camera: Camera, private val skyboxTex: Int = 0, val outputTex: Int = 0) {
 
@@ -82,11 +80,14 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, pri
             val eye = center
             setVec3("eye", eye)
 
+            // camera related data...
             setMat4("cameraWorldMatrix", camera.getWorldMatrix(center))
             setFloat("cameraAspect", (PassVariable.eachPassOutputWidth / PassVariable.eachPassOutputHeight).toFloat())
             setFloat("cameraFov", camera.getVerticalFovRadian())
-            setFloat("cameraAperture", 0.06f)
-            setFloat("cameraFocusLength", 2.0f)
+            setFloat("cameraAperture", camera.aperture)
+            setFloat("cameraFocusLength", camera.focusLength)
+            setFloat("cameraShutterOpenTime", camera.shutterOpenTime)
+            setFloat("cameraShutterCloseTime", camera.shutterCloseTime)
 
             setInt("frame", count)
 

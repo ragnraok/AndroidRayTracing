@@ -11,7 +11,14 @@ val ray = """
         vec3 direction;
         bool pbrBRDF;
         bool pbrDiffuseRay;
+        float time;
     };
+    Ray createRay(vec3 origin, vec3 direction) {
+        Ray ray;
+        ray.origin = origin;
+        ray.direction = direction;
+        return ray;
+    }
     vec3 pointAt(Ray ray, float t) {
         return ray.origin + ray.direction * t;
     }

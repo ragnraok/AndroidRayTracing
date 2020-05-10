@@ -51,6 +51,8 @@ class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceVi
             }
             Scenes.PBR_SPHERE -> {
                 camera = Camera(Vec3(0.0, 2.0, 2.5), 30.0f)
+                camera.aperture = 0.06f
+                camera.focusLength = 2.0f
                 fs = tracerFs(spherePlane)
                 needToneMapping = true
             }

@@ -76,6 +76,7 @@ val DFG = """
 
 @Language("glsl")
 val brdfLightColor = """
+    // direct light calculation
     vec3 brdfLightColor(vec3 N, vec3 L, vec3 V, vec3 lightColor, Material material) {
         vec3 baseColor = material.color;
         float roughness = material.roughness;
@@ -96,9 +97,6 @@ val brdfLightColor = """
         float NDF = DistributionGGX(N, H, roughness);
         float G = GeometrySmith(N, V, L, roughness);
         vec3 F = fresnelSchlick(VdotH, F0);
-
-//        vec3 specularColor = NDF * Vis * F;
-//        specularColor *= 4.0 * NdotL * NdotV / (NdotV + 0.001);
         
          vec3 nominator    = NDF * G * F;
          float denominator = 4.0 * NdotV * NdotL;
@@ -142,6 +140,7 @@ val importSampleGGX = """
 // diffuse irradiance
 @Language("glsl")
 val brdfMaterialColor = """
+    // irradiance/radiance environment BRDF
     vec3 brdfMaterialColor(vec3 N, vec3 L, vec3 V, Material material, bool diffuse) {
         vec3 baseColor = material.color;
         float metallic = material.metallic;
@@ -161,9 +160,7 @@ val brdfMaterialColor = """
         
         vec3 F0 = vec3(0.08);
         F0 = mix(F0, baseColor, metallic);
-//        baseColor = baseColor - baseColor * metallic;
-
-//        vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
+        
         vec3 F = fresnelSchlick(VdotH, F0);
          
         
@@ -172,6 +169,8 @@ val brdfMaterialColor = """
                 color = baseColor;
             }
         } else {
+            // Specular Environment BRDF
+            // https://learnopengl-cn.github.io/07%20PBR/03%20IBL/02%20Specular%20IBL/#brdf
             float NDF = DistributionGGX(N, H, roughness);
             float G = GeometrySmith(N, V, L, roughness);
             float Vis = (G * VdotH) / (NdotH * NdotV);

@@ -205,6 +205,8 @@ val tracerFs = { scene: String ->
     uniform float cameraFov;
     uniform float cameraAperture;
     uniform float cameraFocusLength;
+    uniform float cameraShutterOpenTime;
+    uniform float cameraShutterCloseTime;
     
     uniform float weight; // current render output weight mix with last pass output
     uniform float time; // tick to create diffuse/glossy ray
@@ -229,7 +231,7 @@ val tracerFs = { scene: String ->
         direction = normalize(direction);
         vec3 origin = cameraWorldMatrix[3].xyz;
         direction = mat3(cameraWorldMatrix) * direction;
-        return Ray(origin, direction, false, false);
+        return createRay(origin, direction);
     }
     
     // http://www.pbr-book.org/3ed-2018/Camera_Models/Projective_Camera_Models.html#TheThinLensModelandDepthofField
@@ -251,11 +253,17 @@ val tracerFs = { scene: String ->
         origin = vec3(cameraWorldMatrix * vec4(origin, 1.0));
         direction = mat3(cameraWorldMatrix) * direction;
 
-        return Ray(origin, direction, false, false);
+        return createRay(origin, direction);
     }
 
     void main() {
-        Ray ray = getInitRayWithDepthOfField();
+        Ray ray;
+        //TODO: motion blur according to the shutter open/close time
+        if (cameraAperture > 0.0 && cameraFocusLength > 0.0) {
+            ray = getInitRayWithDepthOfField();
+        } else {
+            ray = getInitRay();
+        }
         vec3 color = calcColor(ray);
         color = max(vec3(0.0), color);
         vec2 coord = vec2(gl_FragCoord.x / ${PassVariable.eachPassOutputWidth}, gl_FragCoord.y / ${PassVariable.eachPassOutputHeight});

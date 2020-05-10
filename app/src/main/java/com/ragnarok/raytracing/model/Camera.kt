@@ -22,13 +22,19 @@ class Camera {
 
     var center = Vec3(0)
 
-//    constructor(pos: Vec3 = Vec3(0), up: Vec3 = Vec3(0, 1, 0), yaw: Float = -90f, pitch: Float = 0f) {
-//        this.position = pos
-//        this.up = up
-//        this.yaw = yaw
-//        this.pitch = pitch
-//        calcPostion()
-//    }
+    var aperture = 0f
+    var focusLength = 0f
+    var shutterOpenTime = 0f
+    var shutterCloseTime = 0f
+
+
+    constructor(pos: Vec3 = Vec3(0), up: Vec3 = Vec3(0, 1, 0), yaw: Float = -90f, pitch: Float = 0f) {
+        this.position = pos
+        this.up = up
+        this.yaw = yaw
+        this.pitch = pitch
+        calcPostion()
+    }
 
     constructor(pos: Vec3, fov: Float) {
         this.position = pos

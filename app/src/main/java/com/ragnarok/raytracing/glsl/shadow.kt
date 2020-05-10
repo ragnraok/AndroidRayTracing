@@ -6,7 +6,7 @@ import org.intellij.lang.annotations.Language
 val shadow = """
     float getShadow(Intersection intersection, vec3 lightDir) {
         float shadow = 1.0;
-        Ray shadowRay = Ray(intersection.hit + intersection.normal * ${PassVariable.eps}, lightDir, false, false);
+        Ray shadowRay = createRay(intersection.hit + intersection.normal * ${PassVariable.eps}, lightDir);
         shadow = $intersectShadowRay(shadowRay);
         return shadow;
     }
