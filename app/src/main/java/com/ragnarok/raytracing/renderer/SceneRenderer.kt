@@ -29,6 +29,8 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, pri
 
     private val random = Random(System.currentTimeMillis())
 
+
+
     init {
         quadRenderer = QuadRenderer()
 
@@ -83,8 +85,8 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, pri
             setMat4("cameraWorldMatrix", camera.getWorldMatrix(center))
             setFloat("cameraAspect", (PassVariable.eachPassOutputWidth / PassVariable.eachPassOutputHeight).toFloat())
             setFloat("cameraFov", camera.getVerticalFovRadian())
-            setFloat("cameraAperture", 0.02f)
-            setFloat("cameraFocusLength", 10.0f)
+            setFloat("cameraAperture", 0.06f)
+            setFloat("cameraFocusLength", 2.0f)
 
             setInt("frame", count)
 
