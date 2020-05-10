@@ -4,21 +4,6 @@ import org.intellij.lang.annotations.Language
 
 // lights related function define
 
-// https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html#generatingrandomdirections
-@Language("glsl")
-val uniformRandomDirection = """
-    vec3 uniformRandomDirection() {
-        float r1 = random(frame);
-        float r2 = random(0);
-        
-        float z = 1.0 - 2.0 * r2;
-        float phi = 2.0 * ${PassVariable.pi} * r1;
-        float x = cos(phi) * sqrt(r2);
-        float y = sin(phi) * sqrt(r2);
-        return vec3(x, y, z);
-    }
-""".trimIndent()
-
 // http://www.rorydriscoll.com/2009/01/07/better-sampling/
 @Language("glsl")
 val cosineWeightDirection = """
@@ -112,7 +97,6 @@ val materialRay = """
 
 val lights = """
     $brdf
-    $uniformRandomDirection
     $cosineWeightDirection
     $pointLightDirection
     $pointLightAttenuation

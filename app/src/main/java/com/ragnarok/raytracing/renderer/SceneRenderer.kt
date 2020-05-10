@@ -77,17 +77,14 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, pri
             setMat4("view", view)
             setMat4("model", model)
 
-            // generate ray00/ray01/ray10/ray11
             val eye = center
             setVec3("eye", eye)
-//            setVec3("ray00", getEyeRay(modelViewProjection, Vec2(-1, -1), eye))
-//            setVec3("ray01", getEyeRay(modelViewProjection, Vec2(-1, 1), eye))
-//            setVec3("ray10", getEyeRay(modelViewProjection, Vec2(1, -1), eye))
-//            setVec3("ray11", getEyeRay(modelViewProjection, Vec2(1, 1), eye))
 
             setMat4("cameraWorldMatrix", camera.getWorldMatrix(center))
             setFloat("cameraAspect", (PassVariable.eachPassOutputWidth / PassVariable.eachPassOutputHeight).toFloat())
             setFloat("cameraFov", camera.getVerticalFovRadian())
+            setFloat("cameraAperture", 0.02f)
+            setFloat("cameraFocusLength", 10.0f)
 
             setInt("frame", count)
 
@@ -110,21 +107,12 @@ class SceneRenderer(private val shader: Shader?, private val camera: Camera, pri
             quadRenderer?.render()
         }
 
-//        skybox.render(projection, view)
 
         GLES30.glFinish()
 
         GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP, 0)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
-    }
-
-    private fun getEyeRay(modelViewProjection: Mat4, screenPos: Vec2, eyeCenter: Vec3): Vec3 {
-        val randomVec = Vec3(random.nextFloat(), random.nextFloat(), random.nextFloat()) * (1 / max(PassVariable.eachPassOutputHeight, PassVariable.eachPassOutputWidth))
-        Log.i(TAG, "randomVec:$randomVec, width:${PassVariable.eachPassOutputWidth}, height:${PassVariable.eachPassOutputHeight}")
-        val jitterMVP = glm.translate(modelViewProjection, randomVec).inverse()
-        val inv = jitterMVP * Vec4(screenPos.x, screenPos.y, 0, 1)
-        return inv.div(inv.w).toVec3() - eyeCenter
     }
 
 }

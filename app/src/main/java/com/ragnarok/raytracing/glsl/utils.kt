@@ -1,5 +1,6 @@
 package com.ragnarok.raytracing.glsl
 
+import com.ragnarok.raytracing.glsl.PassVariable.pi
 import org.intellij.lang.annotations.Language
 
 // some util shader function defines
@@ -54,6 +55,50 @@ const val randomVec3a = "vec3(12.9898, 78.233, 151.7182)"
 const val randomVec3b = "vec3(63.7264, 10.873, 623.6736)"
 
 @Language("glsl")
+val sampleCircle = """
+    // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#SamplingaUnitDisk
+    vec2 sampleCircle(vec2 p) {
+      p = 2.0 * p - 1.0;
+
+      bool greater = abs(p.x) > abs(p.y);
+
+      float r = greater ? p.x : p.y;
+      float theta = greater ? 0.25 * $pi * p.y / p.x : $pi * (0.5 - 0.25 * p.x / p.y);
+
+      return r * vec2(cos(theta), sin(theta));
+    }
+""".trimIndent()
+
+@Language("glsl")
+val cosineSampleHemisphere = """
+    vec3 CosineSampleHemisphere(float u1, float u2){
+        vec3 dir;
+        float r = sqrt(u1);
+        float phi = 2.0 * ${PassVariable.pi} * u2;
+        dir.x = r * cos(phi);
+        dir.y = r * sin(phi);
+        dir.z = sqrt(max(0.0, 1.0 - dir.x*dir.x - dir.y*dir.y));
+
+        return dir;
+    }
+""".trimIndent()
+
+// https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html#generatingrandomdirections
+@Language("glsl")
+val uniformRandomDirection = """
+    vec3 uniformRandomDirection() {
+        float r1 = random(frame);
+        float r2 = random(0);
+        
+        float z = 1.0 - 2.0 * r2;
+        float phi = 2.0 * ${PassVariable.pi} * r1;
+        float x = cos(phi) * sqrt(r2);
+        float y = sin(phi) * sqrt(r2);
+        return vec3(x, y, z);
+    }
+""".trimIndent()
+
+@Language("glsl")
 val commonDefine = """
     #define MEDIUMP_FLT_MAX    65504.0
     #define MEDIUMP_FLT_MIN    0.00006103515625
@@ -64,4 +109,7 @@ val random = """
     $randomFunc3
     $commonDefine
     $ranomdFunc4
+    $cosineSampleHemisphere
+    $uniformRandomDirection
+    $sampleCircle
 """.trimIndent()

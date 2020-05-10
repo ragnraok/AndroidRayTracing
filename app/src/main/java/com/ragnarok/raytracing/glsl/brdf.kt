@@ -141,21 +141,6 @@ val importSampleGGX = """
 
 // diffuse irradiance
 @Language("glsl")
-val cosineSampleHemisphere = """
-    vec3 CosineSampleHemisphere(float u1, float u2){
-        vec3 dir;
-        float r = sqrt(u1);
-        float phi = 2.0 * $pi * u2;
-        dir.x = r * cos(phi);
-        dir.y = r * sin(phi);
-        dir.z = sqrt(max(0.0, 1.0 - dir.x*dir.x - dir.y*dir.y));
-
-        return dir;
-    }
-""".trimIndent()
-
-
-@Language("glsl")
 val brdfMaterialColor = """
     vec3 brdfMaterialColor(vec3 N, vec3 L, vec3 V, Material material, bool diffuse) {
         vec3 baseColor = material.color;
@@ -195,9 +180,6 @@ val brdfMaterialColor = """
             //          = D*Vis*F
             //      Vis = G / 4 * NdotL * NdotV
             vec3 specularColor =  Vis * F;
-            
-//            float ss = 4.0 * NdotL * NdotV / (NdotV + 0.001);
-//            specularColor *= ss;
 
             specularColor *= NdotL;
 
@@ -333,7 +315,6 @@ val brdf = """
     $DFG
     $brdfLightColor
     $importSampleGGX
-    $cosineSampleHemisphere
     $brdfMaterialColor
     $brdfMaterialPdf
     $brdfRayDir

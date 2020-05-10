@@ -203,6 +203,8 @@ val tracerFs = { scene: String ->
     uniform mat4 cameraWorldMatrix;
     uniform float cameraAspect;
     uniform float cameraFov;
+    uniform float cameraAperture;
+    uniform float cameraFocusLength;
     
     uniform float weight; // current render output weight mix with last pass output
     uniform float time; // tick to create diffuse/glossy ray
@@ -229,9 +231,27 @@ val tracerFs = { scene: String ->
         direction = mat3(cameraWorldMatrix) * direction;
         return Ray(origin, direction, false, false);
     }
+    
+    // http://www.pbr-book.org/3ed-2018/Camera_Models/Projective_Camera_Models.html#TheThinLensModelandDepthofField
+    Ray getInitRayWithDepthOfField() {
+        vec2 jitter = vec2((ran.x - 0.5) / ${PassVariable.eachPassOutputWidth}, (ran.y - 0.5) / ${PassVariable.eachPassOutputHeight}) * 0.5;
+        vec2 vPosJitter = vPos + jitter;
+        vec3 direction = vec3(vPosJitter, -1.0) * vec3(cameraAspect, 1.0, cameraFov);
+        direction = normalize(direction);
+        
+        vec2 lensPoints = cameraAperture * sampleCircle(ran);
+        vec3 focusPoint = -direction * cameraFocusLength / direction.z; // intersect ray direction with focus plane
+        vec3 origin = vec3(lensPoints, 0.0);
+        direction = normalize(focusPoint - origin);
+        
+        origin = vec3(cameraWorldMatrix * vec4(origin, 1.0));
+        direction = mat3(cameraWorldMatrix) * direction;
+
+        return Ray(origin, direction, false, false);
+    }
 
     void main() {
-        Ray ray = getInitRay();
+        Ray ray = getInitRayWithDepthOfField();
         vec3 color = calcColor(ray);
         color = max(vec3(0.0), color);
         vec2 coord = vec2(gl_FragCoord.x / ${PassVariable.eachPassOutputWidth}, gl_FragCoord.y / ${PassVariable.eachPassOutputHeight});
