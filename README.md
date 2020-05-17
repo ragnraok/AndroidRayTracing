@@ -16,14 +16,13 @@ Known problems:
 
 ### TODO:
 
-- Motion Blur
 - Texture Support
 - BVH && Model Loading
 
 
 ------
 
-Cornell Box: 
+Cornell Box(with Motion Blur): 
 
 ![](cornell_box.png)
 

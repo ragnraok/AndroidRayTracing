@@ -4,6 +4,8 @@ import org.intellij.lang.annotations.Language
 
 // shader data structure defines
 
+//TODO: object transformation, rotate/scale/translate
+
 @Language("glsl")
 val ray = """
     struct Ray {
@@ -70,6 +72,15 @@ val sphere = """
         float radius;
         Material material;
     };
+    struct MoveSphere {
+        vec3 centerStart;
+        vec3 centerEnd;
+        float radius;
+        Material material;
+    };
+    vec3 centerOfMoveSphere(float time, MoveSphere sphere) {
+        return mix(sphere.centerStart, sphere.centerEnd, time);
+    }
 """.trimIndent()
 
 @Language("glsl")

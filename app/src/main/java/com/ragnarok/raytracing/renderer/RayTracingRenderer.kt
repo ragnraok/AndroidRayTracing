@@ -47,6 +47,8 @@ class RayTracingRenderer(private val context: Context, scene: Int) : GLSurfaceVi
             Scenes.CORNELL_BOX -> {
                 camera = Camera(Vec3(0.0, 0.0, 2.5), 30.0f)
                 fs = tracerFs(cornellBox)
+                camera.shutterOpenTime = 0.0f
+                camera.shutterCloseTime = 1.0f
                 needToneMapping = false
             }
             Scenes.PBR_SPHERE -> {

@@ -173,6 +173,7 @@ val traceLoop = """
             lastRay = ray;
             newRay.origin = intersect.hit + newRay.direction * ${PassVariable.eps};
             ray = newRay;
+            ray.time = mix(cameraShutterOpenTime, cameraShutterCloseTime, randSeed());
         }
         return max(radiance,vec3(0.0));
     }
@@ -241,7 +242,7 @@ val tracerFs = { scene: String ->
         vec3 direction = vec3(vPosJitter, -1.0) * vec3(cameraAspect, 1.0, cameraFov);
         direction = normalize(direction);
         
-        vec2 lensPoints = cameraAperture * sampleCircle(ran);
+        vec2 lensPoints = cameraAperture * sampleCircle(vec2(randSeed(), randSeed()));
         // intersect ray with focus plane
         float t = cameraFocusLength / direction.z; // intersect ray distance t
         // calculate the intersect point on focus plane
@@ -263,6 +264,9 @@ val tracerFs = { scene: String ->
             ray = getInitRayWithDepthOfField();
         } else {
             ray = getInitRay();
+        }
+        if (cameraShutterOpenTime >= 0.0 && cameraShutterCloseTime > 0.0 && cameraShutterCloseTime > cameraShutterOpenTime) {
+            ray.time = mix(cameraShutterOpenTime, cameraShutterCloseTime, randSeed());
         }
         vec3 color = calcColor(ray);
         color = max(vec3(0.0), color);

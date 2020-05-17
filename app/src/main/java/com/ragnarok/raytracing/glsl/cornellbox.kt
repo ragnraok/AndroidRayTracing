@@ -6,6 +6,7 @@ import org.intellij.lang.annotations.Language
 val cornellBox = """
     const int BOX_NUMS = 3;
     const int SPHERE_NUMS = 1;
+    const int MOVE_SPHERE_NUMS = 1;
     const Material diffuseMaterial = Material(DIFFUSE, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0);
     const Material mirrorMaterial = Material(MIRROR, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0);
     const Material glossyMaterial = Material(GLOSSY, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0);
@@ -17,6 +18,9 @@ val cornellBox = """
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
         Sphere(vec3(0.1, -0.75, 0.5), 0.25, mirrorMaterial)
+    );
+    MoveSphere moveSpheres[MOVE_SPHERE_NUMS] = MoveSphere[MOVE_SPHERE_NUMS](
+        MoveSphere(vec3(-0.4, 0.5, 0.5), vec3(-0.45, 0.45, 0.5), 0.25, mirrorMaterial)
     );
     
     PointLight pointLight = PointLight(vec3(1.0, 1.0, 0.5), 0.1, vec3(1.0), 1.5);
@@ -67,6 +71,16 @@ val cornellBox = """
             }
         }
         
+        for (int i = 0; i < MOVE_SPHERE_NUMS; i++) {
+            intersect = intersectMoveSphere(ray, moveSpheres[i]);
+            if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
+                t = intersect.nearFar.x;
+                hit = pointAt(ray, t);
+                normal = normalForMoveSphere(hit, ray.time, moveSpheres[i]);
+                material = moveSpheres[i].material;
+            }    
+        }    
+        
         intersect.t = t;
         if (t == ${PassVariable.infinity}) {
             intersect.nearFar = vec2(${PassVariable.infinity}, ${PassVariable.infinity});
@@ -100,6 +114,13 @@ val cornellBox = """
                 shadow = 0.0;
             }   
         }
+        
+        for (int i = 0; i < MOVE_SPHERE_NUMS; i++) {
+            intersect = intersectMoveSphere(shadowRay, moveSpheres[i]);
+            if (intersect.nearFar.x < 1.0) {
+                shadow = 0.0;
+            }    
+        }        
 
         return shadow;
     }

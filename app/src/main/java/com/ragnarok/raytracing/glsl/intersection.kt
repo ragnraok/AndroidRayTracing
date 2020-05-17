@@ -59,6 +59,34 @@ val normalForSphere = """
 """.trimIndent()
 
 @Language("glsl")
+val intersectMoveSphere = """
+    Intersection intersectMoveSphere(Ray ray, MoveSphere sphere) {
+        Intersection intersect;
+        vec3 toSphere = ray.origin - centerOfMoveSphere(ray.time, sphere);
+        float a = dot(ray.direction, ray.direction);
+        float b = 2.0 * dot(toSphere, ray.direction);
+        float c = dot(toSphere, toSphere) - sphere.radius*sphere.radius;
+        float discriminant = b*b - 4.0*a*c;
+        if(discriminant > 0.0) {
+            float t = (-b - sqrt(discriminant)) / (2.0 * a);
+            if(t > 0.0) {
+                intersect.nearFar = vec2(t, t);
+                return intersect;
+            }
+        }
+        intersect.nearFar = vec2(${PassVariable.infinity}, ${PassVariable.infinity});
+        return intersect;
+    }
+""".trimIndent()
+
+@Language("glsl")
+val normalForMoveSphere = """
+    vec3 normalForMoveSphere(vec3 hit, float time, MoveSphere sphere) {
+        return normalize(hit - centerOfMoveSphere(time, sphere));
+    }
+""".trimIndent()
+
+@Language("glsl")
 val intersectPlane = """
     Intersection intersectPlane(Ray ray, Plane plane) {
         Intersection intersect;
@@ -101,4 +129,6 @@ val intersections = """
     $intersectPlane
     $normalForPlane
     $intersectPointLight
+    $intersectMoveSphere
+    $normalForMoveSphere
 """.trimIndent()
