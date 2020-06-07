@@ -3,8 +3,8 @@ package com.ragnarok.raytracing.primitive
 import android.opengl.GLES30
 import android.util.Log
 import com.ragnarok.raytracing.utils.QuadVertices
-import rangarok.com.androidpbr.utils.genBuffer
-import rangarok.com.androidpbr.utils.genVAO
+import com.ragnarok.raytracing.utils.genBuffer
+import com.ragnarok.raytracing.utils.genVAO
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 

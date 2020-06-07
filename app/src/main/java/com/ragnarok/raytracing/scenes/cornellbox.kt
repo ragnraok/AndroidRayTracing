@@ -1,5 +1,8 @@
-package com.ragnarok.raytracing.glsl
+package com.ragnarok.raytracing.scenes
 
+import com.ragnarok.raytracing.glsl.PassVariable
+import com.ragnarok.raytracing.glsl.intersectSceneFuncHead
+import com.ragnarok.raytracing.glsl.intersectShadowRayFuncHead
 import org.intellij.lang.annotations.Language
 
 @Language("glsl")
@@ -7,20 +10,17 @@ val cornellBox = """
     const int BOX_NUMS = 3;
     const int SPHERE_NUMS = 1;
     const int MOVE_SPHERE_NUMS = 1;
-    const Material diffuseMaterial = Material(DIFFUSE, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0);
-    const Material mirrorMaterial = Material(MIRROR, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0);
-    const Material glossyMaterial = Material(GLOSSY, vec3(0.5), 0.0, 0.0, 0.0, false, 0.0);
-    Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), diffuseMaterial);
+    Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), createNonPBRMaterial(DIFFUSE, vec3(0.5)));
     Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-        Cube(vec3(-0.25, -1.0, -0.25), vec3(0.25, -0.25, 0.0), mirrorMaterial),
-        Cube(vec3(0.5, -1.0, -1.0), vec3(1.0, -0.25, -0.75), glossyMaterial),
-        Cube(vec3(-1.0, -1.0, 0.0), vec3(-0.5, 0.25, 0.25), diffuseMaterial)
+        Cube(vec3(-0.25, -1.0, -0.25), vec3(0.25, -0.25, 0.0), createNonPBRMaterial(MIRROR, vec3(0.5))),
+        Cube(vec3(0.5, -1.0, -1.0), vec3(1.0, -0.25, -0.75), createNonPBRMaterial(GLOSSY, vec3(0.5))),
+        Cube(vec3(-1.0, -1.0, 0.0), vec3(-0.5, 0.25, 0.25), createNonPBRMaterial(DIFFUSE, vec3(0.5)))
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-        Sphere(vec3(0.1, -0.75, 0.5), 0.25, mirrorMaterial)
+        Sphere(vec3(0.1, -0.75, 0.5), 0.25, createNonPBRMaterial(MIRROR, vec3(0.5)))
     );
     MoveSphere moveSpheres[MOVE_SPHERE_NUMS] = MoveSphere[MOVE_SPHERE_NUMS](
-        MoveSphere(vec3(-0.4, 0.5, 0.5), vec3(-0.45, 0.45, 0.5), 0.25, mirrorMaterial)
+        MoveSphere(vec3(-0.4, 0.5, 0.5), vec3(-0.45, 0.45, 0.5), 0.25, createNonPBRMaterial(MIRROR, vec3(0.5)))
     );
     
     PointLight pointLight = PointLight(vec3(1.0, 1.0, 0.5), 0.1, vec3(1.0), 1.5);

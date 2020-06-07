@@ -1,14 +1,21 @@
-package rangarok.com.androidpbr.utils
+package com.ragnarok.raytracing.utils
 
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.opengl.GLES30
 import android.opengl.GLUtils
 import android.os.SystemClock
+import com.ragnarok.raytracing.glsl.PassVariable
 
 fun clearGL() {
     GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
     GLES30.glClearColor(0.75f, 0.75f, 0.75f, 1.0f)
+}
+
+fun clearGLBufferStatus() {
+    GLES30.glBindFramebuffer(GLES30.GL_TEXTURE_2D, 0)
+    GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+    GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, 0)
 }
 
 fun gen2DTextures(texs: IntArray) {

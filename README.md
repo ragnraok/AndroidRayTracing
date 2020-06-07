@@ -16,6 +16,7 @@ Known problems:
 
 ### TODO:
 
+- Object Rotation/Translation
 - Texture Support
 - BVH && Model Loading
 

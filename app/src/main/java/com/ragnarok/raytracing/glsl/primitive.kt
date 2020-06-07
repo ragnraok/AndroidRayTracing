@@ -14,11 +14,13 @@ val ray = """
         bool pbrBRDF;
         bool pbrDiffuseRay;
         float time;
+        vec2 textureCoord;
     };
     Ray createRay(vec3 origin, vec3 direction) {
         Ray ray;
         ray.origin = origin;
         ray.direction = direction;
+        ray.textureCoord = vec2(-1.0, -1.0);
         return ray;
     }
     vec3 pointAt(Ray ray, float t) {
@@ -34,15 +36,52 @@ val material = """
     const int GLOSSY = 3;
     const int PBR_BRDF = 4;
     const int LIGHT = 5;
+    
+    struct MaterialTextures {
+        // Textures
+        sampler2D colorTex;
+        sampler2D normalTex;
+        sampler2D metallicTex;
+        sampler2D roughnessTex;    
+    };    
     struct Material {
         int type;
+        
+        // Lambert
         vec3 color;
+        
+        // BRDF
         float metallic;
         float roughness;
-        float specular;
+        
+        // BTDF
         bool glass;
         float glassRatio;
+        
+        bool hasTextures;
     };
+    Material createNonPBRMaterial(int type, vec3 color) {
+        Material material;
+        material.type = type;
+        material.color = color;
+        return material;
+    }
+    Material createGlassMaterial(vec3 color, float glassRatio) {
+        Material material;
+        material.type = PBR_BRDF;
+        material.color = color;
+        material.glass = true;
+        material.glassRatio = glassRatio;
+        return material;
+    }
+    Material createPBRMaterial(vec3 color, float metallic, float roughness) {
+        Material material;
+        material.type = PBR_BRDF;
+        material.color = color;
+        material.metallic = metallic;
+        material.roughness = roughness;
+        return material;
+    }
 """.trimIndent()
 
 @Language("glsl")
@@ -52,6 +91,7 @@ val intersection = """
         vec3 normal;
         float t;
         vec3 hit;
+        vec2 uv;
         Material material;
     };
 """.trimIndent()

@@ -41,6 +41,10 @@ class Shader(vertex: String, fragment: String) {
         GLES30.glUseProgram(id)
     }
 
+    fun disable() {
+        GLES30.glUseProgram(0)
+    }
+
     fun setBoolean(name: String, value: Boolean) {
         GLES30.glUniform1i(GLES30.glGetUniformLocation(id, name), value.toInt)
     }

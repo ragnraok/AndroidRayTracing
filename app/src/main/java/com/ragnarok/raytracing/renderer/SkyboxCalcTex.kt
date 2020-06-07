@@ -5,8 +5,7 @@ import android.util.Log
 import com.ragnarok.raytracing.glsl.CubeMapConversionFs
 import com.ragnarok.raytracing.glsl.CubeMapVs
 import com.ragnarok.raytracing.primitive.CubeRenderer
-import com.ragnarok.raytracing.utils.cubemapProjection
-import com.ragnarok.raytracing.utils.cubemapViews
+import com.ragnarok.raytracing.utils.*
 import rangarok.com.androidpbr.utils.*
 
 class SkyboxCalcTex(hdrTexture: Int) {

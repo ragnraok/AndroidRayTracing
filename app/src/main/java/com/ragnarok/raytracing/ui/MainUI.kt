@@ -26,8 +26,18 @@ class MainUI : AppCompatActivity() {
             startActivity(intent)
         }
 
+        findViewById<Button>(R.id.pbr_sphere_dof).setOnClickListener {
+            intent.putExtra(SceneRenderUI.SCENE, Scenes.PBR_SPHERE_DOF)
+            startActivity(intent)
+        }
+
         findViewById<Button>(R.id.glass).setOnClickListener {
             intent.putExtra(SceneRenderUI.SCENE, Scenes.GLASS)
+            startActivity(intent)
+        }
+
+        findViewById<Button>(R.id.texture_sphere).setOnClickListener {
+            intent.putExtra(SceneRenderUI.SCENE, Scenes.TEXTURE_SPHERE)
             startActivity(intent)
         }
     }

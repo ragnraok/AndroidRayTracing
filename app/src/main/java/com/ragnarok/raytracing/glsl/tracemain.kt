@@ -187,6 +187,7 @@ val commonDataFunc = """
     $skybox
 """.trimIndent()
 
+//TODO: need to refactor to create static scene
 val tracerFs = { scene: String ->
     @Language("glsl")
     val shader = """

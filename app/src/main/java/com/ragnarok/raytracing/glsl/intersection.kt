@@ -59,6 +59,17 @@ val normalForSphere = """
 """.trimIndent()
 
 @Language("glsl")
+val uvForSphere = """
+    vec2 uvForSphere(vec3 hit) {
+        float phi = atan(hit.z, hit.x);
+        float theta = asin(hit.y);
+        float u = 1.0 - (phi + ${PassVariable.pi}) / (2.0 * ${PassVariable.pi});
+        float v = (theta + ${PassVariable.pi} / 2.0) / ${PassVariable.pi};
+        return vec2(u, v);
+    }
+""".trimIndent()
+
+@Language("glsl")
 val intersectMoveSphere = """
     Intersection intersectMoveSphere(Ray ray, MoveSphere sphere) {
         Intersection intersect;
@@ -126,6 +137,7 @@ val intersections = """
     $normalForCube
     $intersectSphere
     $normalForSphere
+    $uvForSphere
     $intersectPlane
     $normalForPlane
     $intersectPointLight

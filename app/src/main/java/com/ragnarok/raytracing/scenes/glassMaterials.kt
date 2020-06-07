@@ -1,18 +1,21 @@
-package com.ragnarok.raytracing.glsl
+package com.ragnarok.raytracing.scenes
 
+import com.ragnarok.raytracing.glsl.PassVariable
+import com.ragnarok.raytracing.glsl.intersectSceneFuncHead
+import com.ragnarok.raytracing.glsl.intersectShadowRayFuncHead
 import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val glassMaterials = """
-        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5,  Material(PBR_BRDF, vec3(0.5), 0.01, 1.0, 0.01, false, 0.0));
+        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createPBRMaterial(vec3(0.5), 0.0, 1.0));
         const int SPHERE_NUMS = 1;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-            Sphere(vec3(-0.3, 0.3, 0.3), 0.3, Material(PBR_BRDF, vec3(1.0), 0.01, 0.06, 1.0, true, 1.05))
+            Sphere(vec3(-0.3, 0.3, 0.3), 0.3, createGlassMaterial(vec3(1.0), 1.05))
         ); 
         
         const int BOX_NUMS = 1;
         Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-            Cube(vec3(0.2, 0.0, 0.3), vec3(0.5, 0.5, 0.6), Material(PBR_BRDF, vec3(0.75), 0.05, 0.6, 1.0, true, 1.5))
+            Cube(vec3(0.2, 0.0, 0.3), vec3(0.5, 0.5, 0.6), createGlassMaterial(vec3(0.75), 1.5))
         );
         
         PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 5.0);
