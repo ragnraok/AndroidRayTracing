@@ -38,7 +38,7 @@ class PingPongRenderer(private val shader: Shader?, val outputTex: Int = 0) {
     /**
      * render to an output texture, with preview pass input
      */
-    fun render(count: Int = 0, previewOutput: Int) {
+    fun render(count: Int = 0, previewOutput: Int, texturesData: HashMap<String, Int>) {
         if (fbo != 0) {
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, outputTex)
             GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGB16F, PassVariable.eachPassOutputWidth.toInt(), PassVariable.eachPassOutputHeight.toInt(),
@@ -62,6 +62,15 @@ class PingPongRenderer(private val shader: Shader?, val outputTex: Int = 0) {
 
             activeTexture(previewOutput, 0)
             setInt("previous", 0)
+
+            var slot = 1
+            texturesData.forEach {
+                val name = it.key
+                val tex = it.value
+                activeTexture(tex, slot)
+                setInt(name, slot)
+                slot++
+            }
 
             setInt("frame", count)
 

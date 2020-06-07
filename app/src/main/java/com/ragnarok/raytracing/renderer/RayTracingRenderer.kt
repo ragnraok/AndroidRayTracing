@@ -32,6 +32,8 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
     private var pingRenderer: PingPongRenderer? = null
     private var pongRenderer: PingPongRenderer? = null
 
+    private val texturesData = HashMap<String, Int>()
+
     private var outputShader: Shader? = null
     private var outputRenderer: QuadRenderer? = null
 
@@ -129,8 +131,8 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
         rayTracingShader?.apply {
             enable()
 
-            activeTexture(skyboxTex, 1)
-            setInt("skybox", 1)
+//            activeTexture(skyboxTex, 1)
+//            setInt("skybox", 1)
 
             val model = Mat4(1.0)
             val projection = glm.perspective(glm.radians(camera.zoom), (PassVariable.eachPassOutputWidth/PassVariable.eachPassOutputHeight).toFloat(), 0.1f, 1000.0f)
@@ -159,19 +161,13 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
 
     private fun setShaderInput() {
 
-        // texture slots:
-        // 0 for skybox
-        // 1 for previous output
-        // other for scene textures
-
         setCommonShaderInput()
+
+        texturesData["skybox"] = skyboxTex
 
         when (scene) {
             Scenes.TEXTURE_SPHERE -> {
-                rayTracingShader?.apply {
-                    enable()
-//                    setInt("textures[0].colorTex", 0);
-                }
+                texturesData["textures[0].colorTex"] = 2
             }
         }
     }
@@ -180,8 +176,8 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
         // render ray tracing scene
 
         setShaderInput()
-        pingRenderer?.render(renderCount, pongRenderer?.outputTex?:0)
-        pongRenderer?.render(renderCount, pingRenderer?.outputTex?:0)
+        pingRenderer?.render(renderCount, pongRenderer?.outputTex?:0, texturesData)
+        pongRenderer?.render(renderCount, pingRenderer?.outputTex?:0, texturesData)
 
         renderCount++
 
