@@ -159,6 +159,31 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
         }
     }
 
+    private val textureMap = HashMap<String, Int>()
+
+    private fun checkInitTextureSphereSceneTextures() {
+        if (textureMap.size <= 0) {
+//            val texDir = "rust-covered-metal-ue"
+//            val colorTex = uploadTexture(context, "$texDir/rust-covered-metal-albedo.png")
+//            val metallicTex = uploadTexture(context, "$texDir/rust-covered-metal-metal.png")
+//            val roughnessTex = uploadTexture(context, "$texDir/rust-covered-metal-rough.png")
+
+//            val texDir = "scuffed-metal1-ue"
+//            val colorTex = uploadTexture(context, "$texDir/scuffed-metal1_albedo.png")
+//            val metallicTex = uploadTexture(context, "$texDir/scuffed-metal1_metallic.png")
+//            val roughnessTex = uploadTexture(context, "$texDir/scuffed-metal1_roughness.png")
+
+            val texDir = "grimy-metal-ue"
+            val colorTex = uploadTexture(context, "$texDir/grimy-metal-albedo.png")
+            val metallicTex = uploadTexture(context, "$texDir/grimy-metal-metalness.png")
+            val roughnessTex = uploadTexture(context, "$texDir/grimy-metal-roughness.png")
+
+            textureMap["baseColor"] = colorTex
+            textureMap["metallic"] = metallicTex
+            textureMap["roughness"] = roughnessTex
+        }
+    }
+
     private fun setShaderInput() {
 
         setCommonShaderInput()
@@ -167,7 +192,19 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
 
         when (scene) {
             Scenes.TEXTURE_SPHERE -> {
-                texturesData["textures[0].colorTex"] = 2
+                checkInitTextureSphereSceneTextures()
+
+//                texturesData["textures[0].colorTex"] = colorTex
+//                texturesData["textures[0].metallicTex"] = metallicTex
+//                texturesData["textures[0].roughnessTex"] = roughnessTex
+//
+//                texturesData["textures[1].colorTex"] = colorTex
+//                texturesData["textures[1].metallicTex"] = metallicTex
+//                texturesData["textures[1].roughnessTex"] = roughnessTex
+
+                texturesData["baseColorTex"] = textureMap["baseColor"]!!
+                texturesData["metallicTex"] = textureMap["metallic"]!!
+                texturesData["roughnessTex"] = textureMap["roughness"]!!
             }
         }
     }

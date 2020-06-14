@@ -10,10 +10,13 @@ val texture_spheres = """
     Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createPBRMaterial(vec3(0.5), 0.01, 1.0));
     const int SPHERE_NUMS = 2;
     Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-        Sphere(vec3(-0.5, 0.5, -0.5), 0.5, createPBRMaterial(vec3(0.8, 0.7, 0.5), 0.5, 0.05)),
-        Sphere(vec3(0.5, 0.5, 1.0), 0.5, createPBRMaterial(vec3(0.8, 1.0, 0.5), 0.7, 0.05))
+        Sphere(vec3(-0.5, 0.5, -0.5), 0.5, createPBRMaterial(vec3(0.8, 0.7, 0.5), 0.0, 1.0)),
+        Sphere(vec3(0.5, 0.5, 1.0), 0.5, createPBRMaterial(vec3(0.8, 1.0, 0.5), 0.0, 0.8))
     );
-    uniform MaterialTextures textures[SPHERE_NUMS];
+//    uniform MaterialTextures textures[SPHERE_NUMS];
+    uniform sampler2D baseColorTex;
+    uniform sampler2D metallicTex;
+    uniform sampler2D roughnessTex;
     
     PointLight pointLight = PointLight(vec3(0.0, 1.0, 1.0), 0.1, vec3(1.0), 5.0);    
 
@@ -43,19 +46,16 @@ val texture_spheres = """
                 hit = pointAt(ray, t);
                 normal = normalForSphere(hit, spheres[i]);
                 material = spheres[i].material;
-                uv = uvForSphere(hit);
+                uv = uvForSphere((hit - spheres[i].center) / spheres[i].radius);
 //                vec3 color = texture(textures[i].colorTex, uv).rgb;
 //                float metallic = texture(textures[i].metallicTex, uv).r;
 //                float roughness = texture(textures[i].roughnessTex, uv).r;
-//                if (color.r >= 0.0) {
-//                    material.color = color;
-//                }
-//                if (metallic >= 0.0) {
-//                    material.metallic = metallic;
-//                }
-//                if (roughness >= 0.0) {
-//                    material.metallic = roughness;
-//                }
+                vec3 color = texture(baseColorTex, uv).rgb;
+                float metallic = texture(metallicTex, uv).r;
+                float roughness = texture(roughnessTex, uv).r;
+                material.color = color;
+                material.metallic = metallic;
+                material.roughness = roughness;
             }
         }
             
