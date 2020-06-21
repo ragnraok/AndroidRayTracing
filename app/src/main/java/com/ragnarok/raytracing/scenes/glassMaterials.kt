@@ -10,7 +10,7 @@ val glassMaterials = """
         Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createPBRMaterial(vec3(0.5), 0.0, 1.0, 0.1));
         const int SPHERE_NUMS = 1;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-            Sphere(vec3(-0.3, 0.3, 0.3), 0.3, createGlassMaterial(vec3(1.0), 1.1))
+            Sphere(vec3(-0.3, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.8, 0.3, 0.3), 1.1))
         ); 
         
         const int BOX_NUMS = 1;
