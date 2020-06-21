@@ -56,7 +56,7 @@ val material = """
         
         // BTDF
         bool glass;
-        float glassRatio;
+        float ior;
         
         bool hasTextures;
     };
@@ -66,20 +66,22 @@ val material = """
         material.color = color;
         return material;
     }
-    Material createGlassMaterial(vec3 color, float glassRatio) {
+    Material createGlassMaterial(vec3 color, float ior) {
         Material material;
         material.type = PBR_BRDF;
         material.color = color;
         material.glass = true;
-        material.glassRatio = glassRatio;
+        material.ior = ior;
         return material;
     }
-    Material createPBRMaterial(vec3 color, float metallic, float roughness) {
+    Material createPBRMaterial(vec3 color, float metallic, float roughness, float ior) {
         Material material;
         material.type = PBR_BRDF;
         material.color = color;
         material.metallic = metallic;
         material.roughness = roughness;
+        material.glass = false;
+        material.ior = ior;
         return material;
     }
 """.trimIndent()

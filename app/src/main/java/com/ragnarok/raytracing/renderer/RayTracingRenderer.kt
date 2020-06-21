@@ -78,7 +78,7 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
                 needToneMapping = true
             }
             Scenes.TEXTURE_SPHERE -> {
-                camera = Camera(Vec3(0.0, 1.0, 3.0), 30.0f)
+                camera = Camera(Vec3(-1.5, 1.5, 1.5), 30.0f)
                 fs = tracerFs(texture_spheres)
                 needToneMapping = true
             }
@@ -163,24 +163,18 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
 
     private fun checkInitTextureSphereSceneTextures() {
         if (textureMap.size <= 0) {
-//            val texDir = "rust-covered-metal-ue"
-//            val colorTex = uploadTexture(context, "$texDir/rust-covered-metal-albedo.png")
-//            val metallicTex = uploadTexture(context, "$texDir/rust-covered-metal-metal.png")
-//            val roughnessTex = uploadTexture(context, "$texDir/rust-covered-metal-rough.png")
 
-//            val texDir = "scuffed-metal1-ue"
-//            val colorTex = uploadTexture(context, "$texDir/scuffed-metal1_albedo.png")
-//            val metallicTex = uploadTexture(context, "$texDir/scuffed-metal1_metallic.png")
-//            val roughnessTex = uploadTexture(context, "$texDir/scuffed-metal1_roughness.png")
+            val texDir = "pitted-metal_ue"
+            val colorTex = uploadTexture(context, "$texDir/pitted-metal_albedo.png")
+            val metallicTex = uploadTexture(context, "$texDir/pitted-metal_metallic.png")
+            val roughnessTex = uploadTexture(context, "$texDir/pitted-metal_roughness.png")
+            val normalTex = uploadTexture(context, "$texDir/pitted-metal_normal-dx.png")
 
-            val texDir = "grimy-metal-ue"
-            val colorTex = uploadTexture(context, "$texDir/grimy-metal-albedo.png")
-            val metallicTex = uploadTexture(context, "$texDir/grimy-metal-metalness.png")
-            val roughnessTex = uploadTexture(context, "$texDir/grimy-metal-roughness.png")
 
             textureMap["baseColor"] = colorTex
             textureMap["metallic"] = metallicTex
             textureMap["roughness"] = roughnessTex
+            textureMap["normal"] = normalTex
         }
     }
 
@@ -190,6 +184,8 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
 
         texturesData["skybox"] = skyboxTex
 
+        //TODO: fix struct assignemnt
+        //TODO: add normal map support
         when (scene) {
             Scenes.TEXTURE_SPHERE -> {
                 checkInitTextureSphereSceneTextures()
@@ -205,6 +201,7 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
                 texturesData["baseColorTex"] = textureMap["baseColor"]!!
                 texturesData["metallicTex"] = textureMap["metallic"]!!
                 texturesData["roughnessTex"] = textureMap["roughness"]!!
+                texturesData["normalTex"] = textureMap["normal"]!!
             }
         }
     }

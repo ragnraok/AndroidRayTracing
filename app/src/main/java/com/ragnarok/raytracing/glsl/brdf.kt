@@ -72,6 +72,16 @@ val DFG = """
         bias *= clamp( 50.0 * specularColor.y, 0.0, 1.0);
         return specularColor * scale + bias;
     }    
+    
+    float SchlickFresnelFloat(float u) { // F0 is 1.0
+        float m = clamp(1.0 - u, 0.0, 1.0);
+        float m2 = m * m;
+        return m2 * m2*m; // pow(m,5)
+    }
+    
+     float SchlickFresnelFloatR0(float cosTheta, float R0) { // F0 is 1.0
+        return mix(SchlickFresnelFloat(cosTheta), 1.0, R0);
+    }
 """.trimIndent()
 
 @Language("glsl")
@@ -159,9 +169,8 @@ val brdfMaterialColor = """
         vec3 F0 = vec3(0.08);
         F0 = mix(F0, baseColor, metallic);
         
-        vec3 F = fresnelSchlick(VdotH, F0);
-         
-        
+        vec3 F = fresnelSchlickRoughness(VdotH, F0, roughness);
+
         if (diffuse) {
             if (NdotL > 0.0) {
                 color = baseColor;
@@ -225,11 +234,19 @@ val brdfRayDir = """
         vec3 dir;
         float diffuseRatio = 0.5 * (1.0 - metallic);
         
-        vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-        vec3 tangentX = normalize(cross(up, N));
-        vec3 tangentY = normalize(cross(tangentX, N));
+        vec3 ffnormal = dot(N, V) <= 0.0 ? N : N * -1.0;
+        float n1 = 1.0;
+        float n2 = material.ior;
+        float R0 = (n1 - n2) / (n1 + n2);
+        R0 *= R0;
+        float theta = dot(V * -1.0, ffnormal);
+        float prob = SchlickFresnelFloatR0(theta, R0 * R0);
         
-        if (random(bias) < diffuseRatio) {
+        if (random(bias) < prob) {
+            vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+            vec3 tangentX = normalize(cross(up, N));
+            vec3 tangentY = normalize(cross(tangentX, N));
+            
             // diffuse irradiance sample
             dir = CosineSampleHemisphere(u, v);
             dir = tangentX * dir.x  + tangentY * dir.y + N * dir.z;
@@ -267,22 +284,12 @@ val samplePointLight = """
 
 @Language("glsl")
 val btdfRayDir = """
-    float SchlickFresnelFloat(float u) { // F0 is 1.0
-        float m = clamp(1.0 - u, 0.0, 1.0);
-        float m2 = m * m;
-        return m2 * m2*m; // pow(m,5)
-    }
-    
-     float SchlickFresnelFloatR0(float cosTheta, float R0) { // F0 is 1.0
-        return mix(SchlickFresnelFloat(cosTheta), 1.0, R0);
-    }
-    
     vec3 btdfRayDir(vec3 N, Material material, int bias, vec3 viewDir) {
-        float glass = material.glassRatio;
+        float ior = material.ior;
         
         vec3 ffnormal = dot(N, viewDir) <= 0.0 ? N : N * -1.0;
         float n1 = 1.0;
-        float n2 = glass;
+        float n2 = ior;
         float R0 = (n1 - n2) / (n1 + n2);
         R0 *= R0;
         float theta = dot(viewDir * -1.0, ffnormal);

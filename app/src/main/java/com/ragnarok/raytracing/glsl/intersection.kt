@@ -60,9 +60,10 @@ val normalForSphere = """
 
 @Language("glsl")
 val uvForSphere = """
-    vec2 uvForSphere(vec3 hit) {
-        float phi = atan(hit.z, hit.x);
-        float theta = asin(hit.y);
+    vec2 uvForSphere(vec3 hit, Sphere sphere) {
+        vec3 p = (hit - sphere.center) / sphere.radius;
+        float phi = atan(p.z, p.x);
+        float theta = asin(p.y);
         float u = 1.0 - (phi + ${PassVariable.pi}) / (2.0 * ${PassVariable.pi});
         float v = (theta + ${PassVariable.pi} / 2.0) / ${PassVariable.pi};
         return vec2(u, v);
