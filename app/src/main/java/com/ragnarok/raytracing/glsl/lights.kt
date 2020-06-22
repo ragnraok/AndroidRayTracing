@@ -65,22 +65,7 @@ val directionLightDir = """
 @Language("glsl")
 val materialRay = """
     Ray materialRay(Ray ray, Intersection intersection, vec3 lightDir, int bias, out float specular, out bool isBRDFDiffuseRay) {
-        if (intersection.material.type == DIFFUSE) {
-            ray.direction = normalize(cosineWeightDirection(intersection.normal, bias));
-        } else if (intersection.material.type == MIRROR) {
-            ray.direction = normalize(reflect(ray.direction, intersection.normal));
-            vec3 reflectedLight = normalize(reflect(lightDir, intersection.normal));
-            vec3 viewDir = normalize(ray.origin - intersection.hit);
-            specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 50.0);
-            specular = 2.0 * specular;
-        } else if (intersection.material.type == GLOSSY) {
-            float glossiness = ${PassVariable.glossiness};
-            ray.direction = normalize(reflect(ray.direction, intersection.normal)) + uniformRandomDirection() * glossiness;
-            vec3 reflectedLight = normalize(reflect(lightDir, intersection.normal));
-            vec3 viewDir = normalize(ray.origin - intersection.hit);
-            specular = pow(max(0.0, dot(reflectedLight, -viewDir)), 30.0);
-            specular = 2.0 * specular;
-        } else if (intersection.material.type == PBR_BRDF) {
+        if (intersection.material.type == PBR_BRDF) {
             bool isDiffuse = false;
             if (intersection.material.glass == false) {
                 vec3 viewDir = normalize(reflect(ray.direction, intersection.normal));

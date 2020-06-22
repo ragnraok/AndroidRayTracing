@@ -31,9 +31,6 @@ val ray = """
 
 @Language("glsl")
 val material = """
-    const int DIFFUSE = 1;
-    const int MIRROR = 2;
-    const int GLOSSY = 3;
     const int PBR_BRDF = 4;
     const int LIGHT = 5;
     
@@ -60,12 +57,6 @@ val material = """
         
         bool hasTextures;
     };
-    Material createNonPBRMaterial(int type, vec3 color) {
-        Material material;
-        material.type = type;
-        material.color = color;
-        return material;
-    }
     Material createGlassMaterial(vec3 color, float ior) {
         Material material;
         material.type = PBR_BRDF;

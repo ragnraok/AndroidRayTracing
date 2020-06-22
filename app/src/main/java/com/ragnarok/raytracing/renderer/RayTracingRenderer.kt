@@ -58,7 +58,7 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
                 fs = tracerFs(cornellBox)
                 camera.shutterOpenTime = 0.0f
                 camera.shutterCloseTime = 1.0f
-                needToneMapping = false
+                needToneMapping = true
             }
             Scenes.PBR_SPHERE -> {
                 camera = Camera(Vec3(0.0, 2.0, 2.5), 30.0f)

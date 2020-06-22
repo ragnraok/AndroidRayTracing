@@ -131,49 +131,38 @@ val traceLoop = """
             
             vec3 pointLightColor = pointLight.color * pointLightAttenuation(pointLight, intersect.hit) * pointLight.intensity;
 //            vec3 directionLightColor = directionLight.color;
-            
-            if (material.type == PBR_BRDF) {
-                ray.pbrBRDF = true;
-                newRay.pbrBRDF = true;
-                if (intersect.material.glass == false) {
-                    newRay.pbrDiffuseRay = isBRDFDiffuseRay;
-                    vec3 viewDir = normalize(lastIntersect.hit - intersect.hit);
-                    // point light and direction light color
-                    vec3 pointLightColor = brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material) * throughput;
-//                    radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
-                    
-                    // material diffuse and specular color
-                    throughput *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
-                    pdf = brdfMaterialPdf(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
-                    radiance += throughput * pointLightColor * shadow;
-                    specularBounce = false;
-                } else {
-                    throughput *= intersect.material.color;
-                    pdf = 1.0;
-                    specularBounce = true;
-                }
-            } else if (material.type == DIFFUSE || material.type == GLOSSY || material.type == MIRROR) {
-                // diffuse
-                throughput *= color;
 
+            ray.pbrBRDF = true;
+            newRay.pbrBRDF = true;
+            if (intersect.material.glass == false) {
+                newRay.pbrDiffuseRay = isBRDFDiffuseRay;
+                vec3 viewDir = normalize(lastIntersect.hit - intersect.hit);
                 // point light and direction light color
-                float pointNdotL = max(dot(intersect.normal, -pointLightDir), 0.0);
-                vec3 pointLightColor = pointLightColor * pointNdotL;
+                vec3 pointLightColor = brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material) * throughput;
+//                radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
                 
-//                float directionNdotL = max(dot(intersect.normal, directionLightDir), 0.0);
-//                radiance += directionLightColor * directionNdotL;
-                
+                // material diffuse and specular color
+                throughput *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
+                pdf = brdfMaterialPdf(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
                 radiance += throughput * pointLightColor * shadow;
-                radiance += throughput * specular * shadow;
-                
-                pdf = 1.0;
                 specularBounce = false;
+            } else {
+                throughput *= intersect.material.color;
+                pdf = 1.0;
+                specularBounce = true;
             }
             
             lastRay = ray;
             newRay.origin = intersect.hit + newRay.direction * ${PassVariable.eps};
             ray = newRay;
             ray.time = mix(cameraShutterOpenTime, cameraShutterCloseTime, randSeed());
+            
+            // russian roulette
+            float p = max(throughput.r, max(throughput.g, throughput.b));
+            if (random(pass) > p) {
+                break;
+            }
+            throughput *= 1.0 / p;
         }
         return max(radiance,vec3(0.0));
     }
@@ -260,7 +249,6 @@ val tracerFs = { scene: String ->
 
     void main() {
         Ray ray;
-        //TODO: motion blur according to the shutter open/close time
         if (cameraAperture > 0.0 && cameraFocusLength > 0.0) {
             ray = getInitRayWithDepthOfField();
         } else {
