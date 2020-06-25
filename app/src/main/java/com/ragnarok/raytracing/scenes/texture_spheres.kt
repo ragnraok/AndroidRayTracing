@@ -7,11 +7,11 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val texture_spheres = """
-    Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createPBRMaterial(vec3(0.5), 0.01, 1.0, 0.1));
+    Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createNormalMaterial(vec3(0.5), 0.01, 1.0, 0.1));
     const int SPHERE_NUMS = 2;
     Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-        Sphere(vec3(-0.5, 0.5, -0.5), 0.5, createPBRMaterial(vec3(0.8, 0.7, 0.5), 0.0, 1.0, 1.0)),
-        Sphere(vec3(0.5, 0.5, 0.5), 0.5, createPBRMaterial(vec3(0.8, 1.0, 0.5), 0.0, 0.8, 1.0))
+        Sphere(vec3(-0.5, 0.5, -0.5), 0.5, createNormalMaterial(vec3(0.8, 0.7, 0.5), 0.0, 1.0, 1.0)),
+        Sphere(vec3(0.5, 0.5, 0.5), 0.5, createNormalMaterial(vec3(0.8, 1.0, 0.5), 0.0, 0.8, 1.0))
     );
 //    uniform MaterialTextures textures[SPHERE_NUMS];
     uniform sampler2D baseColorTex;
@@ -19,7 +19,7 @@ val texture_spheres = """
     uniform sampler2D roughnessTex;
     uniform sampler2D normalTex;
     
-    PointLight pointLight = PointLight(vec3(0.0, 0.8, 0.0), 0.2, vec3(1.0), 5.0);    
+    PointLight pointLight = PointLight(vec3(0.0, 0.8, 0.0), 0.2, vec3(1.0), 3.0);    
 
     $intersectSceneFuncHead {
         float t = ${PassVariable.infinity};

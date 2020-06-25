@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val glassMaterials = """
-        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createPBRMaterial(vec3(0.5), 0.0, 1.0, 0.1));
+        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createNormalMaterial(vec3(0.5), 0.0, 1.0, 0.1));
         const int SPHERE_NUMS = 1;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
             Sphere(vec3(-0.3, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.8, 0.3, 0.3), 1.1))
@@ -18,7 +18,7 @@ val glassMaterials = """
             Cube(vec3(0.2, 0.0, 0.3), vec3(0.5, 0.5, 0.6), createGlassMaterial(vec3(0.75), 1.5))
         );
         
-        PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 5.0);
+        PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 3.0);
             
         $intersectSceneFuncHead {
             float t = ${PassVariable.infinity};

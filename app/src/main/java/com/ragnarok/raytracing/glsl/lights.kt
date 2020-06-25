@@ -50,7 +50,7 @@ val pointLightDirection = """
 val pointLightAttenuation = """
     float pointLightAttenuation(PointLight pointLight, vec3 position) {
         float dist = length(pointLight.position - position);
-        float attenuation = 1.0 / (1.0 + dist * dist);
+        float attenuation = 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist);
         return attenuation;
     }
 """.trimIndent()

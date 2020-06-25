@@ -10,20 +10,21 @@ val cornellBox = """
     const int BOX_NUMS = 3;
     const int SPHERE_NUMS = 1;
     const int MOVE_SPHERE_NUMS = 1;
-    Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), createPBRMaterial(vec3(0.5), 0.0, 1.0, 0.1));
+    Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), createNormalMaterial(vec3(0.5), 0.0, 1.0, 0.1));
     Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-        Cube(vec3(-0.25, -1.0, -0.25), vec3(0.25, -0.25, 0.0), createPBRMaterial(vec3(0.5), 1.0, 0.1, 1.0)),
-        Cube(vec3(0.5, -1.0, -1.0), vec3(1.0, -0.25, -0.75), createPBRMaterial(vec3(0.5), 1.0, 0.2, 1.0)),
-        Cube(vec3(-1.0, -1.0, 0.0), vec3(-0.5, 0.25, 0.25), createPBRMaterial(vec3(0.5), 0.1, 1.0, 0.2))
+        Cube(vec3(-0.25, -1.0, -0.25), vec3(0.25, -0.25, 0.0), createNormalMaterial(vec3(0.5), 1.0, 0.1, 1.0)),
+        Cube(vec3(0.5, -1.0, -1.0), vec3(1.0, -0.25, -0.75), createNormalMaterial(vec3(0.5), 1.0, 0.2, 1.0)),
+        Cube(vec3(-1.0, -1.0, 0.0), vec3(-0.5, 0.25, 0.25), createNormalMaterial(vec3(0.5), 0.1, 1.0, 0.2))
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-        Sphere(vec3(0.1, -0.75, 0.5), 0.25, createPBRMaterial(vec3(0.5), 1.0, 0.1, 1.0))
+        Sphere(vec3(0.1, -0.75, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1, 1.0))
     );
     MoveSphere moveSpheres[MOVE_SPHERE_NUMS] = MoveSphere[MOVE_SPHERE_NUMS](
-        MoveSphere(vec3(-0.4, 0.5, 0.5), vec3(-0.45, 0.45, 0.5), 0.25, createPBRMaterial(vec3(0.5), 1.0, 0.1, 1.0))
+        MoveSphere(vec3(-0.4, 0.5, 0.5), vec3(-0.45, 0.45, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1, 1.0))
     );
+    Plane emissivePlane = Plane(vec3(0.0, 0.95, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 0.5, createEmissiveMaterial(vec3(1.0), vec3(1.0) * 5.0f, 0.01, 1.0, 0.1));
     
-    PointLight pointLight = PointLight(vec3(1.0, 1.0, 0.5), 0.1, vec3(1.0), 20.0);
+    PointLight pointLight = PointLight(vec3(-0.8, 0.5, -0.7), 0.1, vec3(1.0), 3.0);
     
     // scene intersect
     $intersectSceneFuncHead {
@@ -51,6 +52,16 @@ val cornellBox = """
         }
         
         Intersection intersect;
+        
+        Intersection planeIntersect = intersectPlane(ray, emissivePlane);
+        if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
+            t = planeIntersect.nearFar.x;
+            hit = pointAt(ray, t);
+            intersect.nearFar = planeIntersect.nearFar;
+            normal = normalForPlane(hit, emissivePlane);
+            material = emissivePlane.material;
+        }
+
         for (int i = 0; i < BOX_NUMS; i++) {
             intersect = intersectCube(ray, boxCubes[i]);
             if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {

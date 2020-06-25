@@ -94,8 +94,6 @@ val brdfLightColor = """
         
         vec3 F0 = vec3(0.08);
         F0 = mix(F0, baseColor, metallic);
-//        baseColor = baseColor - baseColor * metallic;
-//        vec3 F0 = mix(vec3(0.08 * specular), baseColor, metallic);
         
         vec3 H = normalize(V + L);
         float NdotL = max(0.0, dot(N, L));

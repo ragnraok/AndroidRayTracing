@@ -47,6 +47,9 @@ val material = """
         // Lambert
         vec3 color;
         
+        // emissive
+        vec3 emissive;
+        
         // BRDF
         float metallic;
         float roughness;
@@ -57,22 +60,39 @@ val material = """
         
         bool hasTextures;
     };
-    Material createGlassMaterial(vec3 color, float ior) {
+    Material createEmptyMaterial() {
         Material material;
+        material.type = PBR_BRDF;
+        material.color = vec3(0.0);
+        material.emissive = vec3(0.0);
+        material.metallic = 0.0;
+        material.roughness = 0.0;
+        material.glass = false;
+        material.ior = 0.0;
+        material.hasTextures = false;
+        return material;
+    }
+    Material createGlassMaterial(vec3 color, float ior) {
+        Material material = createEmptyMaterial();
         material.type = PBR_BRDF;
         material.color = color;
         material.glass = true;
         material.ior = ior;
         return material;
     }
-    Material createPBRMaterial(vec3 color, float metallic, float roughness, float ior) {
-        Material material;
+    Material createNormalMaterial(vec3 color, float metallic, float roughness, float ior) {
+        Material material = createEmptyMaterial();
         material.type = PBR_BRDF;
         material.color = color;
         material.metallic = metallic;
         material.roughness = roughness;
         material.glass = false;
         material.ior = ior;
+        return material;
+    }
+    Material createEmissiveMaterial(vec3 color, vec3 emissive, float metallic, float roughness, float ior) {
+        Material material = createNormalMaterial(color, metallic, roughness, ior);
+        material.emissive = emissive;
         return material;
     }
 """.trimIndent()

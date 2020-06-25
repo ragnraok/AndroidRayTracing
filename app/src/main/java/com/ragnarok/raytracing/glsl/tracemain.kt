@@ -80,7 +80,6 @@ val tracerVs = """
 // main path tracing loop
 @Language("glsl")
 val traceLoop = """
-    //TODO: optimize light calculation
     vec3 calcColor(Ray ray) {
         vec3 radiance = vec3(0.0);
         vec3 throughput = vec3(1.0);
@@ -141,6 +140,7 @@ val traceLoop = """
                 vec3 pointLightColor = brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material) * throughput;
 //                radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
                 
+                radiance += throughput * intersect.material.emissive;
                 // material diffuse and specular color
                 throughput *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
                 pdf = brdfMaterialPdf(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
