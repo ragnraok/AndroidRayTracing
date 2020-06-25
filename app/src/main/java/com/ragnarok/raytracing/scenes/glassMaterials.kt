@@ -10,8 +10,8 @@ val glassMaterials = """
         Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createNormalMaterial(vec3(0.5), 0.0, 1.0, 0.1));
         const int SPHERE_NUMS = 3;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-            Sphere(vec3(-0.7, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.8, 0.3, 0.3), 1.01)),
-            Sphere(vec3(-0.0, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.8, 0.3), 1.02)),
+            Sphere(vec3(-0.7, 0.6, 0.3), 0.3, createGlassMaterial(vec3(0.8, 0.3, 0.3), 1.01)),
+            Sphere(vec3(-0.0, 0.4, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.8, 0.3), 1.02)),
             Sphere(vec3(0.7, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.3, 0.8), 1.03))
         ); 
 

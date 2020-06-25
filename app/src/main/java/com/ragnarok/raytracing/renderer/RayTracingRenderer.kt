@@ -13,6 +13,7 @@ import com.ragnarok.raytracing.scenes.spherePlane
 import com.ragnarok.raytracing.scenes.texture_spheres
 import com.ragnarok.raytracing.utils.*
 import glm_.glm
+import glm_.mat3x3.Mat3
 import glm_.mat4x4.Mat4
 import glm_.vec3.Vec3
 import rangarok.com.androidpbr.utils.*
@@ -187,6 +188,15 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
         //TODO: fix struct assignemnt
         //TODO: add normal map support
         when (scene) {
+            Scenes.CORNELL_BOX -> {
+                rayTracingShader?.apply {
+                    enable()
+                    setMat4("cubeTransform[0]", Mat4(1.0).rotate(glm.radians(-15f), Vec3(0.0, 1.0, 0.0)).inverse())
+                    setMat4("cubeTransform[1]", Mat4(1.0).rotate(glm.radians(15f), Vec3(0.0, 1.0, 0.0)).inverse())
+
+                    disable()
+                }
+            }
             Scenes.TEXTURE_SPHERE -> {
                 checkInitTextureSphereSceneTextures()
 

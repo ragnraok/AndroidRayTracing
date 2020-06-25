@@ -14,7 +14,7 @@ A simple realtime Path Tracer demo for android implemented with GLES 3.0
 
 - Simple Texture Supported
 
-Check the screenshot in the [Screenshot/](screenshot/) folder
+Check the screenshot in the [screenshot/](screenshot/) folder
 
 Known problems:
 
