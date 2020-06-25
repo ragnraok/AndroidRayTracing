@@ -8,16 +8,13 @@ import org.intellij.lang.annotations.Language
 @Language("glsl")
 val glassMaterials = """
         Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createNormalMaterial(vec3(0.5), 0.0, 1.0, 0.1));
-        const int SPHERE_NUMS = 1;
+        const int SPHERE_NUMS = 3;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-            Sphere(vec3(-0.3, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.8, 0.3, 0.3), 1.1))
+            Sphere(vec3(-0.7, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.8, 0.3, 0.3), 1.01)),
+            Sphere(vec3(-0.0, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.8, 0.3), 1.02)),
+            Sphere(vec3(0.7, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.3, 0.8), 1.03))
         ); 
-        
-        const int BOX_NUMS = 1;
-        Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-            Cube(vec3(0.2, 0.0, 0.3), vec3(0.5, 0.5, 0.6), createGlassMaterial(vec3(0.75), 1.5))
-        );
-        
+
         PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 3.0);
             
         $intersectSceneFuncHead {
@@ -44,16 +41,6 @@ val glassMaterials = """
                     hit = pointAt(ray, t);
                     normal = normalForSphere(hit, spheres[i]);
                     material = spheres[i].material;
-                }
-            }
-            
-            for (int i = 0; i < BOX_NUMS; i++) {
-                intersect = intersectCube(ray, boxCubes[i]);
-                if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
-                    t = intersect.nearFar.x;
-                    hit = pointAt(ray, t);
-                    normal = normalForCube(hit, boxCubes[i]);
-                    material = boxCubes[i].material;
                 }
             }
             

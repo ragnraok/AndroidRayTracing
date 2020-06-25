@@ -7,14 +7,13 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val cornellBox = """
-    const int BOX_NUMS = 3;
+    const int BOX_NUMS = 2;
     const int SPHERE_NUMS = 1;
     const int MOVE_SPHERE_NUMS = 1;
     Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), createNormalMaterial(vec3(0.5), 0.0, 1.0, 0.1));
     Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-        Cube(vec3(-0.25, -1.0, -0.25), vec3(0.25, -0.25, 0.0), createNormalMaterial(vec3(0.5), 1.0, 0.1, 1.0)),
-        Cube(vec3(0.5, -1.0, -1.0), vec3(1.0, -0.25, -0.75), createNormalMaterial(vec3(0.5), 1.0, 0.2, 1.0)),
-        Cube(vec3(-1.0, -1.0, 0.0), vec3(-0.5, 0.25, 0.25), createNormalMaterial(vec3(0.5), 0.1, 1.0, 0.2))
+        Cube(vec3(0.3, -1.0, -0.75), vec3(0.8, 0.0, -0.5), createNormalMaterial(vec3(0.5), 1.0, 0.2, 1.0)),
+        Cube(vec3(-0.8, -1.0, -0.75), vec3(-0.3, 0.25, -0.5), createNormalMaterial(vec3(0.5), 0.1, 1.0, 0.2))
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
         Sphere(vec3(0.1, -0.75, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1, 1.0))
