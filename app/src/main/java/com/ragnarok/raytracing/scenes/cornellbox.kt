@@ -59,20 +59,17 @@ val cornellBox = """
         Intersection planeIntersect = intersectPlane(ray, emissivePlane);
         if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
             t = planeIntersect.nearFar.x;
-            hit = pointAt(ray, t);
+            hit = intersect.hit;
             intersect.nearFar = planeIntersect.nearFar;
             normal = normalForPlane(hit, emissivePlane);
             material = emissivePlane.material;
         }
 
         for (int i = 0; i < BOX_NUMS; i++) {
-            Ray transformRay = ray;
-            transformRay.origin = vec3(cubeTransform[i] * vec4(ray.origin, 1.0)); 
-            transformRay.direction = vec3(cubeTransform[i] * vec4(ray.direction, 1.0));
-            intersect = intersectCube(transformRay, boxCubes[i]);
+            intersect = intersectCubeWithTransform(ray, boxCubes[i], cubeTransform[i]);
             if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
                 t = intersect.nearFar.x;
-                hit = pointAt(transformRay, t);
+                hit = intersect.hit;
                 normal = normalForCube(hit, boxCubes[i]);
                 material = boxCubes[i].material;
             }
@@ -82,7 +79,7 @@ val cornellBox = """
             intersect = intersectSphere(ray, boxSpheres[i]);
             if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
                 t = intersect.nearFar.x;
-                hit = pointAt(ray, t);
+                hit = intersect.hit;
                 normal = normalForSphere(hit, boxSpheres[i]);
                 material = boxSpheres[i].material;
             }
@@ -92,7 +89,7 @@ val cornellBox = """
             intersect = intersectMoveSphere(ray, moveSpheres[i]);
             if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
                 t = intersect.nearFar.x;
-                hit = pointAt(ray, t);
+                hit = intersect.hit;
                 normal = normalForMoveSphere(hit, ray.time, moveSpheres[i]);
                 material = moveSpheres[i].material;
             }    
@@ -117,10 +114,7 @@ val cornellBox = """
         Intersection intersect;
         float shadow = 1.0;
         for (int i = 0; i < BOX_NUMS; i++) {
-            Ray transformRay = shadowRay;
-            transformRay.origin = vec3(cubeTransform[i] * vec4(shadowRay.origin, 1.0)); 
-            transformRay.direction = vec3(cubeTransform[i] * vec4(shadowRay.direction, 1.0));
-            intersect = intersectCube(transformRay, boxCubes[i]);
+            intersect = intersectCubeWithTransform(shadowRay, boxCubes[i], cubeTransform[i]);
 
             if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < 1.0 && intersect.nearFar.x < intersect.nearFar.y) {
                 shadow = 0.0;

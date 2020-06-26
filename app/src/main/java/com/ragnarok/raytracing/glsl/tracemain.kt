@@ -133,24 +133,24 @@ val traceLoop = """
 
             ray.pbrBRDF = true;
             newRay.pbrBRDF = true;
+            newRay.pbrDiffuseRay = isBRDFDiffuseRay;
+            vec3 viewDir = normalize(lastIntersect.hit - intersect.hit);
+            // point light and direction light color
+            pointLightColor = brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material) * throughput;
+//            radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
+            
+            radiance += throughput * intersect.material.emissive;
+            // material diffuse and specular color
             if (intersect.material.glass == false) {
-                newRay.pbrDiffuseRay = isBRDFDiffuseRay;
-                vec3 viewDir = normalize(lastIntersect.hit - intersect.hit);
-                // point light and direction light color
-                vec3 pointLightColor = brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material) * throughput;
-//                radiance += brdfLightColor(intersect.normal, directionLightDir, viewDir, directionLightColor, intersect.material);
-                
-                radiance += throughput * intersect.material.emissive;
-                // material diffuse and specular color
                 throughput *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
                 pdf = brdfMaterialPdf(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
-                radiance += throughput * pointLightColor * shadow;
                 specularBounce = false;
             } else {
                 throughput *= intersect.material.color;
                 pdf = 1.0;
                 specularBounce = true;
             }
+            radiance += throughput * pointLightColor * shadow;
             
             lastRay = ray;
             newRay.origin = intersect.hit + newRay.direction * ${PassVariable.eps};

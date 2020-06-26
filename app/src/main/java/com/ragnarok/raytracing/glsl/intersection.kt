@@ -26,6 +26,16 @@ val intersectCube = """
         float tNear = max(max(t1.x, t1.y), t1.z);
         float tFar = min(min(t2.x, t2.y), t2.z);
         intersect.nearFar = vec2(tNear, tFar);
+        intersect.nearFar = vec2(tNear, tFar);
+        intersect.t = intersect.nearFar.x;
+        intersect.hit = pointAt(ray, intersect.t);
+        return intersect;
+    }
+    Intersection intersectCubeWithTransform(Ray ray, Cube cube, mat4 transform) {
+        Ray transformRay = ray;
+        transformRay.origin = vec3(transform * vec4(ray.origin, 1.0)); 
+        transformRay.direction = vec3(transform * vec4(ray.direction, 1.0));
+        Intersection intersect = intersectCube(transformRay, cube);
         return intersect;
     }
 """.trimIndent()
@@ -43,6 +53,8 @@ val intersectSphere = """
             float t = (-b - sqrt(discriminant)) / (2.0 * a);
             if(t > 0.0) {
                 intersect.nearFar = vec2(t, t);
+                intersect.t = intersect.nearFar.x;
+                intersect.hit = pointAt(ray, intersect.t);
                 return intersect;
             }
         }
@@ -83,6 +95,8 @@ val intersectMoveSphere = """
             float t = (-b - sqrt(discriminant)) / (2.0 * a);
             if(t > 0.0) {
                 intersect.nearFar = vec2(t, t);
+                intersect.t = intersect.nearFar.x;
+                intersect.hit = pointAt(ray, intersect.t);
                 return intersect;
             }
         }
@@ -111,6 +125,8 @@ val intersectPlane = """
             }
         }
         intersect.nearFar = vec2(t, t);
+        intersect.t = intersect.nearFar.x;
+        intersect.hit = pointAt(ray, intersect.t);
         return intersect;
     }
 """.trimIndent()

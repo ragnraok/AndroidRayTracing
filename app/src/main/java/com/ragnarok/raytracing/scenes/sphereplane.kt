@@ -32,7 +32,7 @@ val spherePlane = """
         Intersection planeIntersect = intersectPlane(ray, plane);
         if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
             t = planeIntersect.nearFar.x;
-            hit = pointAt(ray, t);
+            hit = planeIntersect.hit;
             intersect.nearFar = planeIntersect.nearFar;
             normal = normalForPlane(hit, plane);
             material = plane.material;
@@ -42,7 +42,7 @@ val spherePlane = """
             intersect = intersectSphere(ray, spheres[i]);
             if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
                 t = intersect.nearFar.x;
-                hit = pointAt(ray, t);
+                hit = intersect.hit;
                 normal = normalForSphere(hit, spheres[i]);
                 material = spheres[i].material;
             }

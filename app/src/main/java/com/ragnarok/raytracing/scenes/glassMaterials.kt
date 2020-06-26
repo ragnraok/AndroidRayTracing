@@ -15,7 +15,7 @@ val glassMaterials = """
             Sphere(vec3(0.7, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.3, 0.8), 1.03))
         ); 
 
-        PointLight pointLight = PointLight(vec3(0.0, 0.5, 0.5), 0.2, vec3(1.0), 3.0);
+        PointLight pointLight = PointLight(vec3(0.0, 1.0, 0.0), 0.5, vec3(1.0), 5.0);
             
         $intersectSceneFuncHead {
             float t = ${PassVariable.infinity};
@@ -28,7 +28,7 @@ val glassMaterials = """
             Intersection planeIntersect = intersectPlane(ray, plane);
             if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
                 t = planeIntersect.nearFar.x;
-                hit = pointAt(ray, t);
+                hit = planeIntersect.hit;
                 intersect.nearFar = planeIntersect.nearFar;
                 normal = normalForPlane(hit, plane);
                 material = plane.material;
@@ -38,7 +38,7 @@ val glassMaterials = """
                 intersect = intersectSphere(ray, spheres[i]);
                 if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
                     t = intersect.nearFar.x;
-                    hit = pointAt(ray, t);
+                    hit = intersect.hit;
                     normal = normalForSphere(hit, spheres[i]);
                     material = spheres[i].material;
                 }
