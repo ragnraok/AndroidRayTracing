@@ -68,7 +68,7 @@ val material = """
         material.metallic = 0.0;
         material.roughness = 0.0;
         material.glass = false;
-        material.ior = 0.0;
+        material.ior = 1.0;
         material.hasTextures = false;
         return material;
     }
@@ -80,18 +80,17 @@ val material = """
         material.ior = ior;
         return material;
     }
-    Material createNormalMaterial(vec3 color, float metallic, float roughness, float ior) {
+    Material createNormalMaterial(vec3 color, float metallic, float roughness) {
         Material material = createEmptyMaterial();
         material.type = PBR_BRDF;
         material.color = color;
         material.metallic = metallic;
         material.roughness = roughness;
         material.glass = false;
-        material.ior = ior;
         return material;
     }
-    Material createEmissiveMaterial(vec3 color, vec3 emissive, float metallic, float roughness, float ior) {
-        Material material = createNormalMaterial(color, metallic, roughness, ior);
+    Material createEmissiveMaterial(vec3 color, vec3 emissive, float metallic, float roughness) {
+        Material material = createNormalMaterial(color, metallic, roughness);
         material.emissive = emissive;
         return material;
     }

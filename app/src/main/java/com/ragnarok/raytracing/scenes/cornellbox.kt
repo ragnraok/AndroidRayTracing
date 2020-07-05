@@ -10,18 +10,18 @@ val cornellBox = """
     const int BOX_NUMS = 2;
     const int SPHERE_NUMS = 1;
     const int MOVE_SPHERE_NUMS = 1;
-    Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), createNormalMaterial(vec3(0.5), 0.0, 1.0, 0.1));
+    Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), createNormalMaterial(vec3(0.5), 0.0, 1.0));
     Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-        Cube(vec3(0.2, -1.0, -0.5), vec3(0.7, 0.0, -0.25), createNormalMaterial(vec3(1.0), 0.01, 1.0, 0.01)),
-        Cube(vec3(-0.7, -1.0, -0.5), vec3(-0.2, 0.25, -0.25), createNormalMaterial(vec3(0.75), 0.01, 1.0, 0.01))
+        Cube(vec3(0.2, -1.0, -0.5), vec3(0.7, 0.0, -0.25), createNormalMaterial(vec3(1.0), 0.01, 1.0)),
+        Cube(vec3(-0.7, -1.0, -0.5), vec3(-0.2, 0.25, -0.25), createNormalMaterial(vec3(0.75), 0.01, 1.0))
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-        Sphere(vec3(0.0, -0.75, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1, 1.0))
+        Sphere(vec3(0.0, -0.75, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1))
     );
     MoveSphere moveSpheres[MOVE_SPHERE_NUMS] = MoveSphere[MOVE_SPHERE_NUMS](
-        MoveSphere(vec3(-0.4, 0.3, 0.5), vec3(-0.45, 0.25, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1, 1.0))
+        MoveSphere(vec3(-0.4, 0.3, 0.5), vec3(-0.45, 0.25, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1))
     );
-    Plane emissivePlane = Plane(vec3(0.0, 0.98, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 0.5, createEmissiveMaterial(vec3(1.0), vec3(1.0) * 5.0f, 0.01, 1.0, 0.1));
+    Plane emissivePlane = Plane(vec3(0.0, 0.98, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 0.5, createEmissiveMaterial(vec3(1.0), vec3(1.0) * 5.0f, 0.01, 1.0));
     
     PointLight pointLight = PointLight(vec3(0.0, 0.95, 0.7), 0.1, vec3(1.0), 3.0);
     
@@ -46,9 +46,9 @@ val cornellBox = """
             } else if (hit.x > delta) {
                 material.color = vec3(0.0, 1.0, 0.0);
             } else if (hit.y < -1.0 * delta || hit.y > delta) {
-                material.color =  vec3(0.75);
+                material.color =  vec3(0.5);
             } else if (hit.z < -1.0 * delta) {
-                material.color = vec3(0.75);
+                material.color = vec3(0.5);
             } else {
                 material.color = vec3(0.0);
             }

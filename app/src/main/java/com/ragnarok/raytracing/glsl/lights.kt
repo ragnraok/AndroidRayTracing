@@ -64,16 +64,15 @@ val directionLightDir = """
 
 @Language("glsl")
 val materialRay = """
-    Ray materialRay(Ray ray, Intersection intersection, vec3 lightDir, int bias, out float specular, out bool isBRDFDiffuseRay) {
+    Ray materialRay(Ray ray, Intersection intersection, vec3 lightDir, int bias, out float specular, out bool isDiffuseRay) {
         if (intersection.material.type == PBR_BRDF) {
             bool isDiffuse = false;
             if (intersection.material.glass == false) {
-                vec3 viewDir = normalize(reflect(ray.direction, intersection.normal));
-                ray.direction = brdfRayDir(intersection.normal, viewDir, intersection.material, bias, isDiffuse);
-                isBRDFDiffuseRay = isDiffuse;
+                ray.direction = brdfRayDir(intersection, ray, bias, isDiffuse);
+                isDiffuseRay = isDiffuse;
             } else {
-                ray.direction = btdfRayDir(intersection.normal, intersection.material, bias, ray.direction);
-                isBRDFDiffuseRay = false;
+                ray.direction = btdfRayDir(intersection, ray, bias);
+                isDiffuseRay = false;
             }
         }
         return ray;

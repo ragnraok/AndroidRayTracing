@@ -222,10 +222,15 @@ val brdfMaterialPdf = """
 
 @Language("glsl")
 val brdfRayDir = """
-    vec3 brdfRayDir(vec3 N, vec3 V, Material material, int bias, out bool isDiffuseRay) {
+    vec3 brdfRayDir(Intersection intersection, Ray ray, int bias, out bool isDiffuseRay) {
         float u = random(bias);
         float v = random(frame);
         vec2 uv = vec2(u, v);
+        
+        vec3 N = intersection.normal;
+        vec3 V = normalize(reflect(ray.direction, N));
+        
+        Material material = intersection.material;
         
         float metallic = material.metallic;
         float roughness = material.roughness;
@@ -238,7 +243,9 @@ val brdfRayDir = """
         float R0 = (n1 - n2) / (n1 + n2);
         R0 *= R0;
         float theta = dot(V * -1.0, ffnormal);
-        float prob = SchlickFresnelFloatR0(theta, R0 * R0);
+        float specularRatio = SchlickFresnelFloatR0(theta, R0 * R0);
+        
+        float prob = mix(diffuseRatio, 1.0, specularRatio);
         
         if (random(bias) < prob) {
             vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
@@ -282,30 +289,31 @@ val samplePointLight = """
 
 @Language("glsl")
 val btdfRayDir = """
-    vec3 btdfRayDir(vec3 N, Material material, int bias, vec3 viewDir) {
+    vec3 btdfRayDir(Intersection intersection, Ray ray, int bias) {
+        Material material = intersection.material;
+        vec3 N = intersection.normal;
+        vec3 V = ray.direction;
         float ior = material.ior;
         
-        vec3 ffnormal = dot(N, viewDir) <= 0.0 ? N : N * -1.0;
+        vec3 ffnormal = dot(N, V) <= 0.0 ? N : N * -1.0;
         float n1 = 1.0;
         float n2 = ior;
         float R0 = (n1 - n2) / (n1 + n2);
         R0 *= R0;
-        float theta = dot(viewDir * -1.0, ffnormal);
+        float theta = dot(V * -1.0, ffnormal);
         float prob = SchlickFresnelFloatR0(theta, R0 * R0);
+        
         vec3 dir;
-    
-    
         float eta = dot(N, ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
-    
     
         // something wrong here
         if (random(bias) < prob) // Reflection
         {
-            dir = normalize(reflect(viewDir, ffnormal));
+            dir = normalize(reflect(ray.direction, ffnormal));
         }
         else
         {
-            dir = normalize(refract(viewDir, ffnormal, eta)); 
+            dir = normalize(refract(ray.direction, ffnormal, eta)); 
         }
         
         return dir;
