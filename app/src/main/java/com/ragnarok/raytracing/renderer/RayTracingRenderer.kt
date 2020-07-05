@@ -74,7 +74,7 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
                 needToneMapping = true
             }
             Scenes.GLASS -> {
-                camera = Camera(Vec3(0.0, 0.55, 2.5), 30.0f)
+                camera = Camera(Vec3(0.0, 0.7, 2.5), 30.0f)
                 fs = tracerFs(glassMaterials)
                 needToneMapping = true
             }

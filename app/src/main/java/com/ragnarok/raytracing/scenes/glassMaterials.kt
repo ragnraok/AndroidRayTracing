@@ -7,13 +7,15 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val glassMaterials = """
-        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createNormalMaterial(vec3(0.5), 0.0, 1.0));
+        Plane plane = Plane(vec3(0.0, 0.0, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 1.5, createNormalMaterial(vec3(1.0), 0.0, 1.0));
         const int SPHERE_NUMS = 3;
         Sphere spheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
             Sphere(vec3(-0.7, 0.6, 0.3), 0.3, createGlassMaterial(vec3(0.8, 0.3, 0.3), 1.01)),
-            Sphere(vec3(-0.0, 0.4, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.8, 0.3), 1.02)),
-            Sphere(vec3(0.7, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.3, 0.8), 1.03))
+            Sphere(vec3(-0.0, 0.4, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.8, 0.3), 1.05)),
+            Sphere(vec3(0.7, 0.3, 0.3), 0.3, createGlassMaterial(vec3(0.3, 0.3, 0.8), 1.1))
         ); 
+        
+        Plane emissivePlane = Plane(vec3(0.0, 0.98, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 0.3, createEmissiveMaterial(vec3(1.0), vec3(1.0) * 5.0f, 0.01, 1.0));
 
         PointLight pointLight = PointLight(vec3(0.0, 1.0, 0.0), 0.5, vec3(1.0), 5.0);
             
@@ -32,6 +34,15 @@ val glassMaterials = """
                 intersect.nearFar = planeIntersect.nearFar;
                 normal = normalForPlane(hit, plane);
                 material = plane.material;
+            }
+            
+            planeIntersect = intersectPlane(ray, emissivePlane);
+            if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
+                t = planeIntersect.nearFar.x;
+                hit = intersect.hit;
+                intersect.nearFar = planeIntersect.nearFar;
+                normal = normalForPlane(hit, emissivePlane);
+                material = emissivePlane.material;
             }
 
             for (int i = 0; i < SPHERE_NUMS; i++) {

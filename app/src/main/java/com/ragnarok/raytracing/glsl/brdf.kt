@@ -79,8 +79,25 @@ val DFG = """
         return m2 * m2*m; // pow(m,5)
     }
     
-     float SchlickFresnelFloatR0(float cosTheta, float R0) { // F0 is 1.0
+    float SchlickFresnelFloatR0(float cosTheta, float R0) { // F0 is 1.0
         return mix(SchlickFresnelFloat(cosTheta), 1.0, R0);
+    }
+    
+    // Computes Schlick's approximation of Fresnel factor
+    // Accounts for total internal reflection if ray is moving from a more dense to a less dense medium
+    float SchlickFresnelFloatR0WithTIR(float cosTheta, float r0, float ni) {
+
+      // moving from a more dense to a less dense medium
+      if (cosTheta < 0.0) {
+        float inv_eta = ni;
+        float SinT2 = inv_eta * inv_eta * (1.0f - cosTheta * cosTheta);
+        if (SinT2 > 1.0) {
+            return 1.0; // total internal reflection
+        }
+        cosTheta = sqrt(1.0f - SinT2);
+      }
+
+      return mix(SchlickFresnelFloat(cosTheta), 1.0, r0);
     }
 """.trimIndent()
 
@@ -243,7 +260,7 @@ val brdfRayDir = """
         float R0 = (n1 - n2) / (n1 + n2);
         R0 *= R0;
         float theta = dot(V * -1.0, ffnormal);
-        float specularRatio = SchlickFresnelFloatR0(theta, R0 * R0);
+        float specularRatio = SchlickFresnelFloatR0(theta, R0);
         
         float prob = mix(diffuseRatio, 1.0, specularRatio);
         
@@ -293,15 +310,15 @@ val btdfRayDir = """
         Material material = intersection.material;
         vec3 N = intersection.normal;
         vec3 V = ray.direction;
-        float ior = material.ior;
+        float IOR = material.ior;
         
         vec3 ffnormal = dot(N, V) <= 0.0 ? N : N * -1.0;
         float n1 = 1.0;
-        float n2 = ior;
+        float n2 = IOR;
         float R0 = (n1 - n2) / (n1 + n2);
         R0 *= R0;
         float theta = dot(V * -1.0, ffnormal);
-        float prob = SchlickFresnelFloatR0(theta, R0 * R0);
+        float prob = SchlickFresnelFloatR0WithTIR(theta, R0, IOR);
         
         vec3 dir;
         float eta = dot(N, ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
