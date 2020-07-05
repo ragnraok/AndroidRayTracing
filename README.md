@@ -22,7 +22,6 @@ Known problems:
 
 ### TODO:
 
-- Combine BRDF/BTDF reflection calculation
 - Object Rotation/Translation
 - BVH && Model Loading
 
