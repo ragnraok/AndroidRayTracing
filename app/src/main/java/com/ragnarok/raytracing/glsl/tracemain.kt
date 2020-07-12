@@ -119,12 +119,12 @@ val traceLoop = """
             
             float shadow = 1.0;
             float specular = 0.0;
-            bool isBRDFDiffuseRay = false;
+            bool isDiffuseRay = false;
             bool isGlassRay = false;
             material = intersect.material;
             vec3 color = material.color;
             
-            Ray newRay = materialRay(ray, intersect, -pointLightDir, pass, specular, isBRDFDiffuseRay);
+            Ray newRay = materialRay(ray, intersect, -pointLightDir, pass, specular, isDiffuseRay);
             
             shadow = getShadow(intersect, -pointLightDir);
             
@@ -133,7 +133,7 @@ val traceLoop = """
 
             ray.pbrBRDF = true;
             newRay.pbrBRDF = true;
-            newRay.pbrDiffuseRay = isBRDFDiffuseRay;
+            newRay.pbrDiffuseRay = isDiffuseRay;
             vec3 viewDir = normalize(lastIntersect.hit - intersect.hit);
             // point light and direction light color
             pointLightColor = brdfLightColor(intersect.normal, -pointLightDir, viewDir, pointLightColor, intersect.material) * throughput;
@@ -142,9 +142,9 @@ val traceLoop = """
             radiance += throughput * intersect.material.emissive;
             // material diffuse and specular color
             if (intersect.material.glass == false) {
-                throughput *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
-                pdf = brdfMaterialPdf(intersect.normal, -ray.direction, ray.origin, intersect.material, isBRDFDiffuseRay);
-                specularBounce = false;
+                throughput *= brdfMaterialColor(intersect.normal, -ray.direction, ray.origin, intersect.material, isDiffuseRay);
+                pdf = brdfMaterialPdf(intersect.normal, -ray.direction, ray.origin, intersect.material, isDiffuseRay);
+                specularBounce = !isDiffuseRay;
             } else {
                 throughput *= intersect.material.color;
                 pdf = 1.0;
