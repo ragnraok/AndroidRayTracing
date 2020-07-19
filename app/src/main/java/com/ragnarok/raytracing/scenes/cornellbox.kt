@@ -16,7 +16,7 @@ val cornellBox = """
         Cube(vec3(0.1, -1.0, -0.5), vec3(0.6, 0.0, -0.0), createNormalMaterial(vec3(1.0), 0.8, 0.3))
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-        Sphere(vec3(0.0, -0.75, 0.5), 0.25, createNormalMaterial(vec3(1.0), 0.8, 0.1))
+        Sphere(vec3(0.0, -0.75, 0.5), 0.25, createNormalMaterial(vec3(0.5), 0.8, 0.1))
     );
     MoveSphere moveSpheres[MOVE_SPHERE_NUMS] = MoveSphere[MOVE_SPHERE_NUMS](
         MoveSphere(vec3(-0.4, 0.3, 0.5), vec3(-0.45, 0.25, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1))
