@@ -13,6 +13,11 @@ val normalForCube = """
         else if (hit.z < cube.cubeMin.z + ${PassVariable.eps}) return vec3(0.0, 0.0, -1.0);
         else return vec3(0.0, 0.0, 1.0);
     }
+    vec3 normalForCubeWithTransform(vec3 hit, Cube cube, mat4 transform) {
+        vec3 normal = normalForCube(hit, cube);
+        normal = vec3(transform * vec4(normal, 1.0));
+        return normal;
+    }
 """.trimIndent()
 
 @Language("glsl")
@@ -33,6 +38,7 @@ val intersectCube = """
     }
     Intersection intersectCubeWithTransform(Ray ray, Cube cube, mat4 transform) {
         Ray transformRay = ray;
+        transform = inverse(transform);
         transformRay.origin = vec3(transform * vec4(ray.origin, 1.0)); 
         transformRay.direction = vec3(transform * vec4(ray.direction, 1.0));
         Intersection intersect = intersectCube(transformRay, cube);
@@ -149,6 +155,14 @@ val intersectPointLight = """
     }
 """.trimIndent()
 
+@Language("glsl")
+val convertHitByTransform = """
+    vec3 convertHitByTransform(vec3 hit, mat4 transform) {
+        vec3 transformHit = vec3(transform * vec4(hit, 1.0));
+        return transformHit;
+    }
+""".trimIndent()
+
 val intersections = """
     $intersectCube
     $normalForCube
@@ -160,4 +174,5 @@ val intersections = """
     $intersectPointLight
     $intersectMoveSphere
     $normalForMoveSphere
+    $convertHitByTransform
 """.trimIndent()
