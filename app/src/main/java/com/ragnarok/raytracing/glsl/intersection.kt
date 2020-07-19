@@ -13,11 +13,6 @@ val normalForCube = """
         else if (hit.z < cube.cubeMin.z + ${PassVariable.eps}) return vec3(0.0, 0.0, -1.0);
         else return vec3(0.0, 0.0, 1.0);
     }
-    vec3 normalForCubeWithTransform(vec3 hit, Cube cube, mat4 transform) {
-        vec3 normal = normalForCube(hit, cube);
-        normal = vec3(transform * vec4(normal, 1.0));
-        return normal;
-    }
 """.trimIndent()
 
 @Language("glsl")
@@ -67,6 +62,14 @@ val intersectSphere = """
         intersect.nearFar = vec2(${PassVariable.infinity}, ${PassVariable.infinity});
         return intersect;
     }
+    Intersection intersectSphereWithTransform(Ray ray, Sphere sphere, mat4 transform) {
+        Ray transformRay = ray;
+        transform = inverse(transform);
+        transformRay.origin = vec3(transform * vec4(ray.origin, 1.0)); 
+        transformRay.direction = vec3(transform * vec4(ray.direction, 1.0));
+        Intersection intersect = intersectSphere(transformRay, sphere);
+        return intersect;
+    }
 """.trimIndent()
 
 @Language("glsl")
@@ -109,6 +112,14 @@ val intersectMoveSphere = """
         intersect.nearFar = vec2(${PassVariable.infinity}, ${PassVariable.infinity});
         return intersect;
     }
+    Intersection intersectMoveSphereWithTransform(Ray ray, MoveSphere sphere, mat4 transform) {
+        Ray transformRay = ray;
+        transform = inverse(transform);
+        transformRay.origin = vec3(transform * vec4(ray.origin, 1.0)); 
+        transformRay.direction = vec3(transform * vec4(ray.direction, 1.0));
+        Intersection intersect = intersectMoveSphere(transformRay, sphere);
+        return intersect;
+    }
 """.trimIndent()
 
 @Language("glsl")
@@ -135,6 +146,14 @@ val intersectPlane = """
         intersect.hit = pointAt(ray, intersect.t);
         return intersect;
     }
+    Intersection intersectPlaneWithTransform(Ray ray, Plane plane, mat4 transform) {
+        Ray transformRay = ray;
+        transform = inverse(transform);
+        transformRay.origin = vec3(transform * vec4(ray.origin, 1.0)); 
+        transformRay.direction = vec3(transform * vec4(ray.direction, 1.0));
+        Intersection intersect = intersectPlane(transformRay, plane);
+        return intersect;
+    }
 """.trimIndent()
 
 @Language("glsl")
@@ -156,10 +175,14 @@ val intersectPointLight = """
 """.trimIndent()
 
 @Language("glsl")
-val convertHitByTransform = """
+val convertVectorByTransform = """
     vec3 convertHitByTransform(vec3 hit, mat4 transform) {
         vec3 transformHit = vec3(transform * vec4(hit, 1.0));
         return transformHit;
+    }
+    vec3 convertNormalByTransform(vec3 normal, mat4 transform) {
+        normal = vec3(transform * vec4(normal, 1.0));
+        return normal;
     }
 """.trimIndent()
 
@@ -174,5 +197,5 @@ val intersections = """
     $intersectPointLight
     $intersectMoveSphere
     $normalForMoveSphere
-    $convertHitByTransform
+    $convertVectorByTransform
 """.trimIndent()

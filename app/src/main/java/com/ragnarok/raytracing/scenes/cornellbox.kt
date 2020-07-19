@@ -12,11 +12,11 @@ val cornellBox = """
     const int MOVE_SPHERE_NUMS = 1;
     Cube cornellBox = Cube(vec3(-1.0, -1.0, -1.0), vec3(1.0, 1.0, 1.0), createNormalMaterial(vec3(0.5), 0.0, 1.0));
     Cube boxCubes[BOX_NUMS] = Cube[BOX_NUMS](
-        Cube(vec3(-0.6, -1.0, -0.5), vec3(-0.1, 0.25, -0.0), createNormalMaterial(vec3(1.0), 0.6, 0.7)),
-        Cube(vec3(0.1, -1.0, -0.5), vec3(0.6, 0.0, -0.0), createNormalMaterial(vec3(1.0), 0.8, 0.2))
+        Cube(vec3(-0.6, -1.0, -0.5), vec3(-0.1, 0.25, -0.0), createNormalMaterial(vec3(1.0), 0.8, 0.1)),
+        Cube(vec3(0.1, -1.0, -0.5), vec3(0.6, 0.0, -0.0), createNormalMaterial(vec3(1.0), 0.8, 0.3))
     );
     Sphere boxSpheres[SPHERE_NUMS] = Sphere[SPHERE_NUMS](
-        Sphere(vec3(0.0, -0.75, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1))
+        Sphere(vec3(0.0, -0.75, 0.5), 0.25, createNormalMaterial(vec3(1.0), 0.8, 0.1))
     );
     MoveSphere moveSpheres[MOVE_SPHERE_NUMS] = MoveSphere[MOVE_SPHERE_NUMS](
         MoveSphere(vec3(-0.4, 0.3, 0.5), vec3(-0.45, 0.25, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1))
@@ -70,8 +70,9 @@ val cornellBox = """
             if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
                 t = intersect.nearFar.x;
                 hit = intersect.hit;
-                normal = normalForCubeWithTransform(hit, boxCubes[i], cubeTransform[i]);
+                normal = normalForCube(hit, boxCubes[i]);
                 material = boxCubes[i].material;
+                normal = convertNormalByTransform(normal, cubeTransform[i]);
                 hit = convertHitByTransform(hit, cubeTransform[i]);
             }
         }

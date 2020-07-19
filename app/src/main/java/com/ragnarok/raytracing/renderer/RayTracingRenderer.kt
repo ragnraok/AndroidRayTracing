@@ -192,7 +192,10 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
                 rayTracingShader?.apply {
                     enable()
                     setMat4("cubeTransform[0]", Mat4(1.0).rotate(glm.radians(30f), Vec3(0.0, 1.0, 0.0)))
-                    setMat4("cubeTransform[1]", Mat4(1.0).rotate(glm.radians(-15f), Vec3(0.0, 1.0, 0.0)))
+                    setMat4("cubeTransform[1]", Mat4(1.0).rotate(glm.radians(-10f), Vec3(0.0, 1.0, 0.0)))
+
+//                    setMat4("cubeTransform[0]", Mat4(1.0))
+//                    setMat4("cubeTransform[1]", Mat4(1.0))
 
                     disable()
                 }
