@@ -13,7 +13,6 @@ import com.ragnarok.raytracing.scenes.spherePlane
 import com.ragnarok.raytracing.scenes.texture_spheres
 import com.ragnarok.raytracing.utils.*
 import glm_.glm
-import glm_.mat3x3.Mat3
 import glm_.mat4x4.Mat4
 import glm_.vec3.Vec3
 import rangarok.com.androidpbr.utils.*
@@ -56,36 +55,36 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
         when (scene) {
             Scenes.CORNELL_BOX -> {
                 camera = Camera(Vec3(0.0, 0.0, 2.5), 30.0f)
-                fs = tracerFs(cornellBox)
+                fs = traceFS(cornellBox)
                 camera.shutterOpenTime = 0.0f
                 camera.shutterCloseTime = 1.0f
                 needToneMapping = true
             }
             Scenes.PBR_SPHERE -> {
                 camera = Camera(Vec3(0.0, 1.0, 2.5), 30.0f)
-                fs = tracerFs(spherePlane)
+                fs = traceFS(spherePlane)
                 needToneMapping = true
             }
             Scenes.PBR_SPHERE_DOF -> {
                 camera = Camera(Vec3(0.0, 2.0, 2.5), 30.0f)
                 camera.aperture = 0.06f
                 camera.focusLength = 2.0f
-                fs = tracerFs(spherePlane)
+                fs = traceFS(spherePlane)
                 needToneMapping = true
             }
             Scenes.GLASS -> {
                 camera = Camera(Vec3(0.0, 0.7, 2.5), 30.0f)
-                fs = tracerFs(glassMaterials)
+                fs = traceFS(glassMaterials)
                 needToneMapping = true
             }
             Scenes.TEXTURE_SPHERE -> {
                 camera = Camera(Vec3(-1.5, 1.5, 1.5), 30.0f)
-                fs = tracerFs(texture_spheres)
+                fs = traceFS(texture_spheres)
                 needToneMapping = true
             }
             else -> {
                 camera = Camera(Vec3(0.0, 0.0, 3.0), 30.0f)
-                fs = tracerFs(cornellBox)
+                fs = traceFS(cornellBox)
             }
 
         }
@@ -114,11 +113,13 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
 
         textures.fill(0)
         gen2DTextures(textures)
-        rayTracingShader = Shader(tracerVs, fs)
+        rayTracingShader = Shader(traceVS, fs)
         clearGLBufferStatus()
 
         skyboxTex = uploadTexture(context, "envs/newport_loft.png")
         clearGLBufferStatus()
+
+        setShaderInput()
 
         pingRenderer = PingPongRenderer(shader = rayTracingShader, outputTex = textures[0])
         pongRenderer = PingPongRenderer(shader = rayTracingShader, outputTex = textures[1])
@@ -183,6 +184,10 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
 
         setCommonShaderInput()
 
+        setShaderSceneInput()
+    }
+
+    private fun setShaderSceneInput() {
         texturesData["skybox"] = skyboxTex
 
         //TODO: fix struct assignemnt
@@ -222,7 +227,7 @@ class RayTracingRenderer(private val context: Context, private val scene: Int) :
     private fun renderFrame() {
         // render ray tracing scene
 
-        setShaderInput()
+//        setShaderInput()
         pingRenderer?.render(renderCount, pongRenderer?.outputTex?:0, texturesData)
         pongRenderer?.render(renderCount, pingRenderer?.outputTex?:0, texturesData)
 

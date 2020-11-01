@@ -136,6 +136,24 @@ val sphere = """
 """.trimIndent()
 
 @Language("glsl")
+val triangle = """
+    struct Triangle {
+        vec3 p0;
+        vec3 p1;
+        vec3 p2;
+        Material material;
+    };
+""".trimIndent()
+
+@Language("glsl")
+val bound = """
+    struct Bound {
+        vec3 min;
+        vec3 max;
+    };
+""".trimIndent()
+
+@Language("glsl")
 val plane = """
     struct Plane { 
         vec3 center;
@@ -170,6 +188,7 @@ val primitives = """
     $cube
     $sphere
     $plane
+    $triangle
     $pointLight
     $directionLight
 """.trimIndent()

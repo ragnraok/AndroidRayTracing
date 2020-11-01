@@ -164,6 +164,53 @@ val normalForPlane = """
 """.trimIndent()
 
 @Language("glsl")
+val normalForTriangle = """
+    vec3 normalForTriangle(Triangle triangle) {
+        vec3 e1 = triangle.p1 - triangle.p0;
+        vec3 e2 = triangle.p2 - triangle.p0;
+        return normalize(cross(e1, e2));
+    }
+""".trimIndent()
+
+@Language("glsl")
+val intersectTriangle = """
+    Intersection intersectTriangle(Ray ray, Triangle triangle) {
+        Intersection intersect;
+        float t = ${PassVariable.infinity};
+        vec3 e1 = triangle.p1 - triangle.p0;
+        vec3 e2 = triangle.p2 - triangle.p0;
+        vec3 pvec = cross(ray.direction, e2);
+        float det = dot(e1, pvec);
+        if (abs(det) <= ${PassVariable.eps}) {
+            intersect.t = ${PassVariable.infinity};
+            return intersect;
+        }
+        float invDet = 1.0 / det;
+        vec3 tvec = ray.origin - triangle.p0;
+        float u = dot(tvec, pvec) * invDet;
+        if (u < 0.0 || u > 1.0) {
+            intersect.t = ${PassVariable.infinity};
+            return intersect;
+        }
+        vec3 qvec = cross(tvec, e1);
+        float v = dot(ray.direction, qvec) * invDet;
+        if (v < 0.0 || u + v > 1.0) {
+            intersect.t = ${PassVariable.infinity};
+            return intersect;
+        }
+        t = dot(e2, qvec) * invDet;
+        if (t < 0.0) {
+            intersect.t = ${PassVariable.infinity};
+            return intersect;
+        }
+        intersect.nearFar = vec2(t, t);
+        intersect.t = intersect.nearFar.x;
+        intersect.hit = pointAt(ray, intersect.t);
+        return intersect;
+    }
+""".trimIndent()
+
+@Language("glsl")
 val intersectPointLight = """
     Intersection intersectPointLight(Ray ray, PointLight pointLight) {
         Material material;
@@ -198,4 +245,6 @@ val intersections = """
     $intersectMoveSphere
     $normalForMoveSphere
     $convertVectorByTransform
+    $normalForTriangle
+    $intersectTriangle
 """.trimIndent()

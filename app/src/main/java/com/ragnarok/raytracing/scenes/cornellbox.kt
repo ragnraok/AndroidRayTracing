@@ -5,7 +5,7 @@ import com.ragnarok.raytracing.glsl.intersectSceneFuncHead
 import com.ragnarok.raytracing.glsl.intersectShadowRayFuncHead
 import org.intellij.lang.annotations.Language
 
-@Language("glsl")
+@Language("GLSL")
 val cornellBox = """
     const int BOX_NUMS = 2;
     const int SPHERE_NUMS = 1;
@@ -22,6 +22,7 @@ val cornellBox = """
         MoveSphere(vec3(-0.4, 0.3, 0.5), vec3(-0.45, 0.25, 0.5), 0.25, createNormalMaterial(vec3(0.5), 1.0, 0.1))
     );
     Plane emissivePlane = Plane(vec3(0.0, 0.98, 0.0), normalize(vec3(0.0, 1.0, 0.0)), 0.5, createEmissiveMaterial(vec3(1.0), vec3(1.0) * 3.0f, 0.01, 1.0));
+    Triangle emissiveTriangle = Triangle(vec3(0.5, 0.99, 0.0), vec3(0.0, 0.99, -0.5), vec3(-0.5, 0.99, 0.0), createEmissiveMaterial(vec3(1.0), vec3(1.0) * 3.0f, 0.01, 1.0));
     
     PointLight pointLight = PointLight(vec3(0.0, 0.95, 0.0), 0.1, vec3(1.0), 3.0);
     
@@ -56,34 +57,32 @@ val cornellBox = """
         
         Intersection intersect;
         
-        Intersection planeIntersect = intersectPlane(ray, emissivePlane);
-        if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
-            t = planeIntersect.nearFar.x;
+//        Intersection planeIntersect = intersectPlane(ray, emissivePlane);
+//        if (planeIntersect.nearFar.x > 0.0 && planeIntersect.nearFar.x < t) {
+//            t = planeIntersect.nearFar.x;
+//            hit = intersect.hit;
+//            intersect.nearFar = planeIntersect.nearFar;
+//            normal = normalForPlane(hit, emissivePlane);
+//            material = emissivePlane.material;
+//        }
+        Intersection triangleIntersect = intersectTriangle(ray, emissiveTriangle);
+        if (triangleIntersect.nearFar.x > 0.0 && triangleIntersect.nearFar.x < t) {
+            t = triangleIntersect.nearFar.x;
             hit = intersect.hit;
-            intersect.nearFar = planeIntersect.nearFar;
-            normal = normalForPlane(hit, emissivePlane);
-            material = emissivePlane.material;
+            intersect.nearFar = triangleIntersect.nearFar;
+            normal = normalForTriangle(emissiveTriangle);
+            material = emissiveTriangle.material;
         }
 
         for (int i = 0; i < BOX_NUMS; i++) {
             intersect = intersectCubeWithTransform(ray, boxCubes[i], cubeTransform[i]);
-            if (intersect.nearFar.x > 1.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
+            if (intersect.nearFar.y > 0.0 && intersect.nearFar.x < intersect.nearFar.y && intersect.nearFar.x < t) {
                 t = intersect.nearFar.x;
                 hit = intersect.hit;
                 normal = normalForCube(hit, boxCubes[i]);
                 material = boxCubes[i].material;
                 normal = convertNormalByTransform(normal, cubeTransform[i]);
                 hit = convertHitByTransform(hit, cubeTransform[i]);
-            }
-        }
-        
-        for (int i = 0; i < SPHERE_NUMS; i++) {
-            intersect = intersectSphere(ray, boxSpheres[i]);
-            if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
-                t = intersect.nearFar.x;
-                hit = intersect.hit;
-                normal = normalForSphere(hit, boxSpheres[i]);
-                material = boxSpheres[i].material;
             }
         }
         
@@ -96,6 +95,16 @@ val cornellBox = """
                 material = moveSpheres[i].material;
             }    
         }    
+        
+        for (int i = 0; i < SPHERE_NUMS; i++) {
+            intersect = intersectSphere(ray, boxSpheres[i]);
+            if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < t) {
+                t = intersect.nearFar.x;
+                hit = intersect.hit;
+                normal = normalForSphere(hit, boxSpheres[i]);
+                material = boxSpheres[i].material;
+            }
+        }
         
         intersect.t = t;
         if (t == ${PassVariable.infinity}) {
@@ -118,7 +127,7 @@ val cornellBox = """
         for (int i = 0; i < BOX_NUMS; i++) {
             intersect = intersectCubeWithTransform(shadowRay, boxCubes[i], cubeTransform[i]);
 
-            if (intersect.nearFar.x > 0.0 && intersect.nearFar.x < 1.0 && intersect.nearFar.x < intersect.nearFar.y) {
+            if (intersect.nearFar.y > 0.0 && intersect.nearFar.y < 1.0 && intersect.nearFar.x < intersect.nearFar.y) {
                 shadow = 0.0;
             }
         }

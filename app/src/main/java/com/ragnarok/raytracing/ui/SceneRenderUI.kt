@@ -1,5 +1,6 @@
 package com.ragnarok.raytracing.ui
 
+import android.graphics.Point
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.os.Handler
@@ -10,6 +11,7 @@ import android.view.WindowManager
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.ragnarok.raytracing.R
+import com.ragnarok.raytracing.glsl.PassVariable
 import com.ragnarok.raytracing.renderer.RayTracingRenderer
 
 class SceneRenderUI : AppCompatActivity() {
@@ -36,6 +38,10 @@ class SceneRenderUI : AppCompatActivity() {
 
         actionBar?.hide()
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+//        val windowSize = Point()
+//        window.windowManager.defaultDisplay.getSize(windowSize)
+//        PassVariable.eachPassOutputHeight = PassVariable.eachPassOutputWidth * (1.0 * windowSize.y / windowSize.x)
 
         surfaceView = findViewById(R.id.surfaceview)
         infoTextView = findViewById(R.id.info_tv)

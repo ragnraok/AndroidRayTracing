@@ -53,6 +53,19 @@ class Shader(vertex: String, fragment: String) {
         GLES30.glUniform1i(GLES30.glGetUniformLocation(id, name), value)
     }
 
+    fun setIntArray(name: String, value: Array<Int>) {
+        val count = value.size
+
+//        val flatArray = FloatArray(3 * count)
+//        value.forEachIndexed { index, vec3 ->
+//            flatArray[index * 3] = vec3.x
+//            flatArray[index * 3 + 1] = vec3.y
+//            flatArray[index * 3 + 2] = vec3.z
+//        }
+//        GLES30.glUniform3fv(GLES30.glGetUniformLocation(id, name), count, flatArray, 0)
+        GLES30.glUniform1iv(GLES30.glGetUniformLocation(id, name), count, value.toIntArray(), 0)
+    }
+
     fun setFloat(name: String, value: Float) {
         GLES30.glUniform1f(GLES30.glGetUniformLocation(id, name), value)
     }

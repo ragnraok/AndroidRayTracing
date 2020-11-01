@@ -6,6 +6,10 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.ragnarok.raytracing.R
 import com.ragnarok.raytracing.renderer.Scenes
+import com.ragnarok.raytracing.renderer.bvh.BVH
+import de.javagl.obj.ObjReader
+import de.javagl.obj.ObjUtils
+import kotlin.concurrent.thread
 
 class MainUI : AppCompatActivity() {
 
@@ -39,6 +43,14 @@ class MainUI : AppCompatActivity() {
         findViewById<Button>(R.id.texture_sphere).setOnClickListener {
             intent.putExtra(SceneRenderUI.SCENE, Scenes.TEXTURE_SPHERE)
             startActivity(intent)
+        }
+
+        thread {
+            val obj = ObjUtils.convertToRenderable(ObjReader.read(assets.open("bunny/bunny.obj")))
+            obj?.let {
+                val bvh = BVH(it)
+                bvh.buildBVH()
+            }
         }
     }
 
