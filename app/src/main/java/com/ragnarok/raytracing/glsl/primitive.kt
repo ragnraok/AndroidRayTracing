@@ -154,6 +154,16 @@ val bound = """
 """.trimIndent()
 
 @Language("glsl")
+val boundNode = """
+    struct BoundNode {
+        Bound bound;
+        Triangle triangle;
+        int triangleIndex;
+        int boundIndex;
+    };
+""".trimIndent()
+
+@Language("glsl")
 val plane = """
     struct Plane { 
         vec3 center;
@@ -189,6 +199,8 @@ val primitives = """
     $sphere
     $plane
     $triangle
+    $bound
+    $boundNode
     $pointLight
     $directionLight
 """.trimIndent()

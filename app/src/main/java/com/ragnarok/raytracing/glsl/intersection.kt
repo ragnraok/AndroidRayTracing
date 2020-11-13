@@ -211,6 +211,51 @@ val intersectTriangle = """
 """.trimIndent()
 
 @Language("glsl")
+val intersectBound = """
+    Intersection intersectBound(Ray ray, Bound bound) {
+        vec3 invDir = 1.0f / ray.direction;
+        vec3 dirIsNeg = vec3(ray.direction.x > 0.0 ? 1.0 : 0.0, 
+                             ray.direction.y > 0.0 ? 1.0 : 0.0,
+                             ray.direction.z > 0.0 ? 1.0 : 0.0);
+        float txMin = (bound.min.x - ray.origin.x) * invDir.x;
+        float txMax = (bound.max.x - ray.origin.x) * invDir.x;
+        
+        float tyMin = (bound.min.y - ray.origin.y) * invDir.y;
+        float tyMax = (bound.max.y - ray.origin.y) * invDir.y;
+        
+        float tzMin = (bound.min.z - ray.origin.z) * invDir.z;
+        float tzMax = (bound.max.z - ray.origin.z) * invDir.z;
+        
+        Intersection intersect;
+        float t = ${PassVariable.infinity};
+        
+        if (dirIsNeg.x == 0.0) {
+            t = txMin;
+            txMin = txMax;
+            txMax = t;
+        }
+        if (dirIsNeg.y == 0.0) {
+            t = tyMin;
+            tyMin = tyMax;
+            tyMax = t;
+        }
+        if (dirIsNeg.z == 0.0) {
+            t = tzMin;
+            tzMin = tzMax;
+            tzMax = t;
+        }
+        float tMin = max(txMin, max(tyMin, tzMin));
+        float tMax = min(txMax, min(tyMax, tzMax));
+        
+        intersect.nearFar = vec2(tMin, tMax);
+        intersect.t = nearFar.x;
+        intersect.hit = pointAt(ray, intersect.t);
+        return intersect;
+        
+    }
+""".trimIndent()
+
+@Language("glsl")
 val intersectPointLight = """
     Intersection intersectPointLight(Ray ray, PointLight pointLight) {
         Material material;
@@ -247,4 +292,5 @@ val intersections = """
     $convertVectorByTransform
     $normalForTriangle
     $intersectTriangle
+    $intersectBound
 """.trimIndent()

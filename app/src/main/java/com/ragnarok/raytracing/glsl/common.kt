@@ -32,13 +32,15 @@ val commonTraceInputOutput = """
 val bvhTraceInput = { vertexNum: Int, bvhNodeNum: Int ->
 @Language("glsl")
 val shader = """
-    uniform vec3 vertices[$vertexNum];
-    uniform vec3 bvhMinBounds[$bvhNodeNum];
-    uniform vec3 bvhMaxBounds[$bvhNodeNum]
-    uniform int bvhTriangleIndex[$bvhNodeNum];
+    #define VERTEX_NUM $vertexNum
+    #define BVH_NODE_NUM $bvhNodeNum
+    uniform vec3 vertices[VERTEX_NUM];
+    uniform vec3 bvhMinBounds[BVH_NODE_NUM]; // for node in a[k], left node is in a[k * 2], right node is in a[2 * k + 1]
+    uniform vec3 bvhMaxBounds[BVH_NODE_NUM];
+    uniform int bvhTriangleIndex[BVH_NODE_NUM];
     
-//    uniform vec3 normals[$vertexNum];
-//    uniform vec3 texCoords[$vertexNum]
+//    uniform vec3 normals[VERTEX_NUM];
+//    uniform vec3 texCoords[VERTEX_NUM]
 """.trimIndent()
 
     shader
