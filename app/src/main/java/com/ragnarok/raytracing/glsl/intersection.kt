@@ -248,7 +248,7 @@ val intersectBound = """
         float tMax = min(txMax, min(tyMax, tzMax));
         
         intersect.nearFar = vec2(tMin, tMax);
-        intersect.t = nearFar.x;
+        intersect.t = intersect.nearFar.x;
         intersect.hit = pointAt(ray, intersect.t);
         return intersect;
         

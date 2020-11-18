@@ -41,4 +41,11 @@
         android:layout_height="wrap_content"
         android:text="@string/texture_sphere"
         android:layout_margin="10dp"/>
+
+    <Button
+        android:id="@+id/model"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/model"
+        android:layout_margin="10dp"/>
 </LinearLayout>

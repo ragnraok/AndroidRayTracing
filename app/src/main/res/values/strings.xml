@@ -5,4 +5,5 @@
     <string name="pbr_sphere_dof">PBR Sphere with depth of field</string>
     <string name="glass">Glass</string>
     <string name="texture_sphere">Texture Sphere</string>
+    <string name="model">BVH Render Model</string>
 </resources>

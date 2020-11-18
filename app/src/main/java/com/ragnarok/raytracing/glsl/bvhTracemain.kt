@@ -2,7 +2,7 @@ package com.ragnarok.raytracing.glsl
 
 import org.intellij.lang.annotations.Language
 
-val bvhTraceFS = { vertexNum: Int, bvhNodeNum: Int, scene: String ->
+val bvhTraceFS = { vertexNum: Int, bvhNodeNum: Int ->
     @Language("glsl")
     val shader = """
     #version 300 es
@@ -11,13 +11,9 @@ val bvhTraceFS = { vertexNum: Int, bvhNodeNum: Int, scene: String ->
     
     $commonTraceInputOutput
     
-    ${bvhTraceInput(vertexNum, bvhNodeNum)}
-    
     $commonDataFunc
     
-    $scene
-    
-    $shadow
+    ${bvhTraceInput(vertexNum, bvhNodeNum)}
 
     ${bvhCalcColor(vertexNum, bvhNodeNum)}
     

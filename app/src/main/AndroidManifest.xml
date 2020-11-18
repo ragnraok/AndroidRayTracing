@@ -19,6 +19,7 @@
         </activity>
         <activity android:name=".ui.SceneRenderUI">
         </activity>
+        <activity android:name=".ui.ModelRenderUI" />
     </application>
 
 </manifest>

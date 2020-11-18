@@ -45,6 +45,12 @@ class MainUI : AppCompatActivity() {
             startActivity(intent)
         }
 
+        findViewById<Button>(R.id.model).setOnClickListener {
+            val modelIntent = Intent()
+            modelIntent.setClass(this, ModelRenderUI::class.java)
+            startActivity(modelIntent)
+        }
+
         thread {
             val obj = ObjUtils.convertToRenderable(ObjReader.read(assets.open("bunny/bunny.obj")))
             obj?.let {

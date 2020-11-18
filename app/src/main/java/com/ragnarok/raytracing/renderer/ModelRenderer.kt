@@ -47,7 +47,7 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
 
     private var renderCount = 0
 
-    private val fs: String
+    private var fs: String = ""
 
     private var needToneMapping = false
 
@@ -58,7 +58,7 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
 
     init {
         camera = Camera(Vec3(0.0, 0.0, 2.5), 30.0f)
-        fs = traceFS(cornellBox)
+//        fs = traceFS(cornellBox)
         camera.shutterOpenTime = 0.0f
         camera.shutterCloseTime = 1.0f
         needToneMapping = true
@@ -69,8 +69,10 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
     private fun readModelData() {
         obj = ObjUtils.convertToRenderable(ObjReader.read(context.assets.open(modelAssetPath)))
         obj?.let {
-            bvh = BVH(it)
-            bvh?.buildBVH()
+            bvh = BVH(it).apply {
+                buildBVH()
+                fs = bvhTraceFS(verticesArray.size, bvhMinFlatArray.size)
+            }
         }
         // TODO: how pass bvh data to shader?
         // by texture data?

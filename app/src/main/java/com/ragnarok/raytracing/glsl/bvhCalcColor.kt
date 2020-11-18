@@ -9,7 +9,7 @@ val bvhIntersect = """
         vec3 nodeMin = bvhMinBounds[treePtr];
         vec3 nodeMax = bvhMaxBounds[treePtr];
         int triangleIndex = bvhTriangleIndex[treePtr];
-        Bound bound(min, max);
+        Bound bound = Bound(nodeMin, nodeMax);
         BoundNode boundNode;
         boundNode.bound = bound;
         boundNode.triangleIndex = triangleIndex;
@@ -18,7 +18,7 @@ val bvhIntersect = """
             vec3 p0 = vertices[3 * triangleIndex];
             vec3 p1 = vertices[3 * triangleIndex + 1];
             vec3 p2 = vertices[3 * triangleIndex + 2];
-            Triangle triangle(p0, p1, p2, material);
+            Triangle triangle = Triangle(p0, p1, p2, material);
             boundNode.triangle = triangle;
         }
         return boundNode;
@@ -41,7 +41,7 @@ val bvhIntersect = """
             int rightIndex = 2 * boundNode.boundIndex + 1;
             
             bool hasLeft = true;
-            bool hasRight = true
+            bool hasRight = true;
             if (leftIndex >= BVH_NODE_NUM) {
                 // not have left node
                 hasLeft = false;
@@ -53,7 +53,7 @@ val bvhIntersect = """
             
             if (!hasLeft && !hasRight) {
                  // leaf node
-                 if (boundNode.triangleIndex >= 0) {
+                if (boundNode.triangleIndex >= 0) {
                     intersection = intersectTriangle(ray, boundNode.triangle);
                 }
                 break;
@@ -66,8 +66,8 @@ val bvhIntersect = """
                 Intersection leftIntersection = intersectBound(ray, leftNode.bound);
                 Intersection rightIntersection = intersectBound(ray, rightNode.bound);
                 
-                bool isHitLeft = leftIntersection.nearFar.x <= leftIntersection.nearFar.y && leftIntersection.nearFar.y >= 0;
-                bool isHitRight = rightIntersection.nearFar.x <= rightIntersection.nearFar.y && rightIntersection.nearFar.y >= 0;
+                bool isHitLeft = leftIntersection.nearFar.x <= leftIntersection.nearFar.y && leftIntersection.nearFar.y >= 0.0;
+                bool isHitRight = rightIntersection.nearFar.x <= rightIntersection.nearFar.y && rightIntersection.nearFar.y >= 0.0;
                 
                 if (isHitLeft && leftIntersection.t < rightIntersection.t) {
                     stack[stackPtr++] = leftNode;
@@ -85,7 +85,10 @@ val bvhCalcColor = { vertexNum: Int, bvhNodeNum: Int ->
     @Language("glsl")
     val shader = """
         $bvhIntersect
-
+        
+        vec3 calcColor(Ray ray) {
+            return vec3(1.0, 0.0, 0.0);
+        }
     """.trimIndent()
 
 
