@@ -61,6 +61,7 @@ class BVH(private val obj: ReadableObj) {
 
     fun buildBVH() {
         var tick = currentTick()
+        val startTick = tick
         faceIndices = ObjData.getFaceVertexIndicesArray(obj)
         if (obj.numNormals > 0) {
             normalIndices = ObjData.getFaceNormalIndicesArray(obj)
@@ -165,7 +166,7 @@ class BVH(private val obj: ReadableObj) {
 
         Log.i(TAG, "bvh flat array size:[${bvhMaxFlatArray.size} ${bvhMinFlatArray.size} ${bvhTriangleIndexArray.size}], " +
                 "vertices.size:${verticesArray.size}, bounds.size:[${minBoundsArray.size} ${maxBoundsArray.size}], normals.size:${normalArray.size}, " +
-                "texCoordArray.size:${texCoordArray.size}")
+                "texCoordArray.size:${texCoordArray.size}, totally cost:${tickToNowMs(startTick)}ms")
     }
 
     private fun recursiveBuild(triangles: List<Triangle>, depth: Int = 0): BVHNode {

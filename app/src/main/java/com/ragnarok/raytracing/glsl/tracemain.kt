@@ -4,7 +4,7 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val traceVS = """
-    #version 300 es
+    #version 320 es
 
     layout (location = 0) in vec3 aPos;
     layout (location = 1) in vec2 aTexCoords;
@@ -31,7 +31,7 @@ val traceVS = """
 val traceFS = { scene: String ->
     @Language("glsl")
     val shader = """
-    #version 300 es
+    #version 320 es
     precision highp float;
     precision highp int;
     

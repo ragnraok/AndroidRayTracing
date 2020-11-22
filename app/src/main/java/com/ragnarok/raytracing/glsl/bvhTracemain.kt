@@ -5,13 +5,19 @@ import org.intellij.lang.annotations.Language
 val bvhTraceFS = { vertexNum: Int, bvhNodeNum: Int ->
     @Language("glsl")
     val shader = """
-    #version 300 es
+    #version 320 es
+    #extension GL_EXT_texture_buffer : require
     precision highp float;
     precision highp int;
+    precision highp samplerBuffer;
     
     $commonTraceInputOutput
     
     $commonDataFunc
+    
+    Material material = createNormalMaterial(vec3(1.0), 0.01, 1.0);
+    
+    PointLight pointLight = PointLight(vec3(0.0, 0.95, 0.0), 0.1, vec3(1.0), 3.0);
     
     ${bvhTraceInput(vertexNum, bvhNodeNum)}
 

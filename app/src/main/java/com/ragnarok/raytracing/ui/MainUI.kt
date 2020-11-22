@@ -50,14 +50,6 @@ class MainUI : AppCompatActivity() {
             modelIntent.setClass(this, ModelRenderUI::class.java)
             startActivity(modelIntent)
         }
-
-        thread {
-            val obj = ObjUtils.convertToRenderable(ObjReader.read(assets.open("bunny/bunny.obj")))
-            obj?.let {
-                val bvh = BVH(it)
-                bvh.buildBVH()
-            }
-        }
     }
 
 }

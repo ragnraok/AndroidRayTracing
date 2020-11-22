@@ -5,30 +5,37 @@ import org.intellij.lang.annotations.Language
 
 @Language("glsl")
 val bvhIntersect = """
+    vec3 fetchVec3FromBuffer(samplerBuffer bufferTex, int index) {
+        float x = texelFetch(bufferTex, index * 3).x;
+        float y = texelFetch(bufferTex, index * 3 + 1).x;
+        float z = texelFetch(bufferTex, index * 3 + 2).x;
+        return vec3(x, y, z);
+    }
     BoundNode createBoundNode(int treePtr, Material material) {
-        vec3 nodeMin = bvhMinBounds[treePtr];
-        vec3 nodeMax = bvhMaxBounds[treePtr];
-        int triangleIndex = bvhTriangleIndex[treePtr];
+        vec3 nodeMin = fetchVec3FromBuffer(bvhMinBoundsBuffer, treePtr);
+        vec3 nodeMax = fetchVec3FromBuffer(bvhMaxBoundsBuffer, treePtr);
+        int triangleIndex = int(texelFetch(bvhTriangleIndexBuffer, treePtr).x);
         Bound bound = Bound(nodeMin, nodeMax);
         BoundNode boundNode;
         boundNode.bound = bound;
         boundNode.triangleIndex = triangleIndex;
         boundNode.boundIndex = treePtr;
         if (triangleIndex >= 0) {
-            vec3 p0 = vertices[3 * triangleIndex];
-            vec3 p1 = vertices[3 * triangleIndex + 1];
-            vec3 p2 = vertices[3 * triangleIndex + 2];
+            vec3 p0 = fetchVec3FromBuffer(verticesBuffer, 3 * triangleIndex);
+            vec3 p1 = fetchVec3FromBuffer(verticesBuffer, 3 * triangleIndex + 1);
+            vec3 p2 = fetchVec3FromBuffer(verticesBuffer, 3 * triangleIndex + 2);
             Triangle triangle = Triangle(p0, p1, p2, material);
             boundNode.triangle = triangle;
         }
         return boundNode;
     }
     
-    Intersection bvhIntersection(Ray ray, Material material) {
+    Intersection intersectScene(Ray ray) {
         BoundNode boundNode = createBoundNode(1, material);
         BoundNode leftNode, rightNode;
         
         Intersection intersection;
+        intersection.t = ${PassVariable.infinity};
         
         BoundNode stack[30];
         int stackPtr = 1;
@@ -86,9 +93,11 @@ val bvhCalcColor = { vertexNum: Int, bvhNodeNum: Int ->
     val shader = """
         $bvhIntersect
         
-        vec3 calcColor(Ray ray) {
-            return vec3(1.0, 0.0, 0.0);
+        float getShadow(Intersection intersection, vec3 lightDir) {
+            return 1.0;
         }
+        
+        $calcColor
     """.trimIndent()
 
 

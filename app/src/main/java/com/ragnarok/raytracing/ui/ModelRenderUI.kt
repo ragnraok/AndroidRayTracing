@@ -39,7 +39,7 @@ class ModelRenderUI : AppCompatActivity() {
         surfaceView = findViewById(R.id.surfaceview)
         infoTextView = findViewById(R.id.info_tv)
 
-        renderer = ModelRenderer(this, "monkey/monkey.obj")
+        renderer = ModelRenderer(this, "monkey/monkey.obj", surfaceView)
         surfaceView.setEGLContextClientVersion(3)
         surfaceView.setRenderer(renderer)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
@@ -64,5 +64,10 @@ class ModelRenderUI : AppCompatActivity() {
         super.onPause()
         renderLoopStart = false
         handler.removeCallbacksAndMessages(null)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        renderer.detach()
     }
 }

@@ -9,6 +9,7 @@ import com.ragnarok.raytracing.utils.*
 import glm_.vec2.Vec2
 import rangarok.com.androidpbr.utils.*
 import java.util.*
+import kotlin.collections.HashMap
 
 class PingPongRenderer(private val shader: Shader?, val outputTex: Int = 0) {
 
@@ -38,7 +39,7 @@ class PingPongRenderer(private val shader: Shader?, val outputTex: Int = 0) {
     /**
      * render to an output texture, with preview pass input
      */
-    fun render(count: Int = 0, previewOutput: Int, texturesData: HashMap<String, Int>) {
+    fun render(count: Int = 0, previewOutput: Int, texturesData: HashMap<String, Int> = HashMap()) {
         if (fbo != 0) {
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, outputTex)
             GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGB16F, PassVariable.eachPassOutputWidth.toInt(), PassVariable.eachPassOutputHeight.toInt(),

@@ -2,13 +2,18 @@ package com.ragnarok.raytracing.renderer
 
 import android.content.Context
 import android.opengl.GLES30
+import android.opengl.GLES32
+import android.opengl.GLES32.GL_MAX_TEXTURE_BUFFER_SIZE
 import android.opengl.GLSurfaceView
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import com.ragnarok.raytracing.glsl.*
 import com.ragnarok.raytracing.model.Camera
+import com.ragnarok.raytracing.primitive.BufferTexture
 import com.ragnarok.raytracing.primitive.QuadRenderer
 import com.ragnarok.raytracing.renderer.bvh.BVH
-import com.ragnarok.raytracing.scenes.cornellBox
 import com.ragnarok.raytracing.utils.*
 import de.javagl.obj.ObjReader
 import de.javagl.obj.ObjUtils
@@ -17,14 +22,22 @@ import glm_.glm
 import glm_.mat4x4.Mat4
 import glm_.vec3.Vec3
 import rangarok.com.androidpbr.utils.Shader
+import java.nio.FloatBuffer
+import java.nio.IntBuffer
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.collections.HashMap
+import kotlin.concurrent.thread
 
-class ModelRenderer(private val context: Context, private val modelAssetPath: String) : GLSurfaceView.Renderer {
+class ModelRenderer(private val context: Context, private val modelAssetPath: String, private var view: GLSurfaceView?) : GLSurfaceView.Renderer {
 
     companion object {
         const val TAG = "ModelRenderer"
     }
+
+    private var uiHandler = Handler(Looper.getMainLooper())
 
     private var width = 0
     private var height = 0
@@ -56,14 +69,32 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
     private var obj: ReadableObj? = null
     private var bvh: BVH? = null
 
+    private var bvhDataBuffer: HashMap<String, BufferTexture> = HashMap()
+    private var textureUniformSlot = 0
+
+    @Volatile private var initedRendered = false
+    @Volatile private var surfaceReady = false
+    private val pendingJob: ConcurrentLinkedQueue<()->Unit> = ConcurrentLinkedQueue()
+
     init {
         camera = Camera(Vec3(0.0, 0.0, 2.5), 30.0f)
-//        fs = traceFS(cornellBox)
         camera.shutterOpenTime = 0.0f
         camera.shutterCloseTime = 1.0f
         needToneMapping = true
 
-        readModelData()
+        thread {
+            val tick = currentTick()
+            readModelData()
+
+            uiHandler.post {
+                Toast.makeText(context, "read model data finished, cost:${tickToNowMs(tick)}ms", Toast.LENGTH_LONG).show()
+            }
+
+            post {
+                initRenderer()
+                initedRendered = true
+            }
+        }
     }
 
     private fun readModelData() {
@@ -83,16 +114,25 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
 
     override fun onDrawFrame(gl: GL10?) {
         clearGL()
-        renderFrame()
+        flushPendingJobs()
+        if (initedRendered) {
+            renderFrame()
+        }
+    }
+
+    private fun flushPendingJobs() {
+        while (pendingJob.isNotEmpty()) {
+            val job = pendingJob.peek()
+            job()
+        }
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        Log.i(RayTracingRenderer.TAG, "onSurfaceChanged, width:$width, height:$height")
+        Log.i(TAG, "onSurfaceChanged, width:$width, height:$height")
         viewport(width, height)
         this.width = width
         this.height = height
-
-        initRenderer()
+        surfaceReady = true
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -100,29 +140,38 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
     }
 
     private fun initRenderer() {
-
+        Log.i(TAG, "start init renderer")
         textures.fill(0)
         gen2DTextures(textures)
         rayTracingShader = Shader(traceVS, fs)
-        setShaderInput()
-        clearGLBufferStatus()
 
-        skyboxTex = uploadTexture(context, "envs/newport_loft.png")
-        clearGLBufferStatus()
-
+        // slot 0: outputTex
         pingRenderer = PingPongRenderer(shader = rayTracingShader, outputTex = textures[0])
         pongRenderer = PingPongRenderer(shader = rayTracingShader, outputTex = textures[1])
+
+        setShaderInput()
+        clearGLBufferStatus()
 
         outputShader = Shader(outputVs, outputFs)
         outputRenderer = QuadRenderer()
         clearGLBufferStatus()
+
+        val maxTextureBufferSize = IntArray(1)
+        GLES32.glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, maxTextureBufferSize, 0)
+        Log.i(TAG, "maxTextureBufferSize:${maxTextureBufferSize[0]}")
     }
 
     private fun setShaderInput() {
+        skyboxTex = uploadTexture(context, "envs/newport_loft.png")
+        clearGLBufferStatus()
+        // slot 1: skybox texture
+        texturesData["skybox"] = skyboxTex
+        textureUniformSlot = 1
+
         rayTracingShader?.apply {
             enable()
             setCommonShaderInput(this)
-            setupBVHShaderInput(this)
+            setupBVHBufferInput(this)
 
             disable()
         }
@@ -158,7 +207,11 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
         }
     }
 
+    @Deprecated("try buffer texture now")
     private fun setupBVHShaderInput(shader: Shader) {
+        //TODO: exceed uniform array size limit try another way to pass bvh data to shader
+        //maybe use buffer texture object:
+        //https://www.khronos.org/opengl/wiki/Buffer_Texture
         shader.apply {
             bvh?.let {
                 setVec3Array("vertices", it.verticesArray.toTypedArray())
@@ -170,10 +223,56 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
         }
     }
 
+    private fun setupBVHBufferInput(shader: Shader) {
+        // https://www.khronos.org/opengl/wiki/Buffer_Texture
+        bvh?.let {
+            // buffer texture slot start from 2
+            var slot = textureUniformSlot + 1
+
+            val verticesBuffer = FloatBuffer.allocate(it.verticesArray.size * 3)
+            for (vertex in it.verticesArray) {
+                verticesBuffer.put(vertex.x)
+                verticesBuffer.put(vertex.y)
+                verticesBuffer.put(vertex.z)
+            }
+            val verticesBufferTexture = BufferTexture.create(verticesBuffer, it.verticesArray.size * 3)
+            verticesBufferTexture.bind(slot++, shader, "verticesBuffer")
+            bvhDataBuffer["verticesBuffer"] = verticesBufferTexture
+
+            val minFlatBuffer = FloatBuffer.allocate(it.bvhMinFlatArray.size * 3)
+            for (min in it.bvhMinFlatArray) {
+                minFlatBuffer.put(min.x)
+                minFlatBuffer.put(min.y)
+                minFlatBuffer.put(min.z)
+            }
+            val minFlatBufferTexture = BufferTexture.create(minFlatBuffer, it.bvhMinFlatArray.size * 3)
+            minFlatBufferTexture.bind(slot++, shader, "bvhMinBoundsBuffer")
+            bvhDataBuffer["bvhMinBoundsBuffer"]
+
+            val maxFlatBuffer = FloatBuffer.allocate(it.bvhMaxFlatArray.size * 3)
+            for (max in it.bvhMaxFlatArray) {
+                maxFlatBuffer.put(max.x)
+                maxFlatBuffer.put(max.y)
+                maxFlatBuffer.put(max.z)
+            }
+            val maxFlatBufferTexture = BufferTexture.create(maxFlatBuffer, it.bvhMaxFlatArray.size * 3)
+            maxFlatBufferTexture.bind(slot++, shader, "bvhMaxBoundsBuffer")
+            bvhDataBuffer["bvhMaxBoundsBuffer"] = maxFlatBufferTexture
+
+            val triangleIndexBuffer = IntBuffer.wrap(it.bvhTriangleIndexArray.toIntArray())
+            val triangleIndexBufferTexture = BufferTexture.create(triangleIndexBuffer, it.bvhTriangleIndexArray.size, isInt = true)
+            triangleIndexBufferTexture.bind(slot, shader, "bvhTriangleIndexBuffer")
+            bvhDataBuffer["bvhTriangleIndexBuffer"] = triangleIndexBufferTexture
+
+            Log.i(TAG, "finished set bvh data buffer texture object, final texture slot:$slot")
+            textureUniformSlot = slot
+
+        }
+    }
+
+
     private fun renderFrame() {
         // render ray tracing scene
-
-//        setShaderInput()
         pingRenderer?.render(renderCount, pongRenderer?.outputTex?:0, texturesData)
         pongRenderer?.render(renderCount, pingRenderer?.outputTex?:0, texturesData)
 
@@ -200,6 +299,18 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
         }
     }
 
+    private fun post(r: ()->Unit) {
+        if (!surfaceReady) {
+            pendingJob.add(r)
+        } else {
+            view?.queueEvent(r)
+        }
+    }
+
     fun frameCount() = renderCount
+
+    fun detach() {
+        this.view = null
+    }
 
 }
