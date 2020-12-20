@@ -39,7 +39,7 @@ class ModelRenderUI : AppCompatActivity() {
         surfaceView = findViewById(R.id.surfaceview)
         infoTextView = findViewById(R.id.info_tv)
 
-        renderer = ModelRenderer(this, "monkey/monkey.obj", surfaceView)
+        renderer = ModelRenderer(this, "cornellbox/shortbox.obj", surfaceView)
         surfaceView.setEGLContextClientVersion(3)
         surfaceView.setRenderer(renderer)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY

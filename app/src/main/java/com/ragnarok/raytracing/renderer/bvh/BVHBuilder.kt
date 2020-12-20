@@ -1,6 +1,7 @@
 package com.ragnarok.raytracing.renderer.bvh
 
 import android.util.Log
+import com.ragnarok.raytracing.glsl.PassVariable
 import com.ragnarok.raytracing.utils.currentTick
 import com.ragnarok.raytracing.utils.tickToNowMs
 import de.javagl.obj.ObjData
@@ -62,7 +63,7 @@ class BVH(private val obj: ReadableObj) {
     fun buildBVH() {
         var tick = currentTick()
         val startTick = tick
-        faceIndices = ObjData.getFaceVertexIndicesArray(obj)
+        faceIndices = ObjData.getFaceVertexIndicesArray(obj, 3)
         if (obj.numNormals > 0) {
             normalIndices = ObjData.getFaceNormalIndicesArray(obj)
             normals = ObjData.getNormalsArray(obj)
@@ -87,26 +88,31 @@ class BVH(private val obj: ReadableObj) {
         Log.i(TAG, "buildNormals:$buildNormals, buildTexCoords:$buildTexCoords")
 
         for (i in faceIndices.indices step 3) {
+            //TODO: maybe error in extract face indices
             val p0Index = faceIndices[i]
-            val p0x = vertices[p0Index]
-            val p0y = vertices[p0Index + 1]
-            val p0z = vertices[p0Index + 2]
+            val p0x = vertices[3 * p0Index]
+            val p0y = vertices[3 * p0Index + 1]
+            val p0z = vertices[3 * p0Index + 2]
 
             val p1Index = faceIndices[i + 1]
-            val p1x = vertices[p1Index]
-            val p1y = vertices[p1Index + 1]
-            val p1z = vertices[p1Index + 2]
+            val p1x = vertices[3 * p1Index]
+            val p1y = vertices[3 * p1Index + 1]
+            val p1z = vertices[3 * p1Index + 2]
 
             val p2Index = faceIndices[i + 2]
-            val p2x = vertices[p2Index]
-            val p2y = vertices[p2Index + 1]
-            val p2z = vertices[p2Index + 2]
+            val p2x = vertices[3 * p2Index]
+            val p2y = vertices[3 * p2Index + 1]
+            val p2z = vertices[3 * p2Index + 2]
 
-            verticesArray.add(Vec3(p0x, p0y, p0z))
-            verticesArray.add(Vec3(p1x, p1y, p1z))
-            verticesArray.add(Vec3(p2x, p2y, p2z))
+            val p0 = Vec3(p0x, p0y, p0z)
+            val p1 = Vec3(p1x, p1y, p1z)
+            val p2 = Vec3(p2x, p2y, p2z)
+            verticesArray.add(p0)
+            verticesArray.add(p1)
+            verticesArray.add(p2)
+//            Log.i(TAG, "put new triangle:[$p0,$p1,$p2]")
 
-            val triangle = Triangle(Vec3(p0x, p0y, p0z), Vec3(p1x, p1y, p1z), Vec3(p2x, p2y, p2z))
+            val triangle = Triangle(p0, p1, p2)
             triangleList.add(triangle)
 
             minBoundsArray.add(triangle.bound.min)
@@ -174,13 +180,13 @@ class BVH(private val obj: ReadableObj) {
         for (triangle in triangles) {
             bound = bound.union(triangle.bound)
         }
+        bvhDepth = max(bvhDepth, depth)
         if (triangles.size == 1) {
             bvhNodeCount++
-            bvhDepth = max(bvhDepth, depth)
             return BVHNode(bound = triangles[0].bound, left = null, right = null, triangle = triangles[0], area = triangles[0].area, depth = depth)
         } else if (triangles.size == 2) {
-            val leftNode = recursiveBuild(triangles.subList(0, 1), depth = depth + 1)
-            val rightNode = recursiveBuild(triangles.subList(1, 2), depth = depth + 1)
+            val leftNode = recursiveBuild(listOf(triangles[0]), depth = depth + 1)
+            val rightNode = recursiveBuild(listOf(triangles[1]), depth = depth + 1)
             bvhNodeCount++
             return BVHNode(bound = leftNode.bound.union(rightNode.bound), left = leftNode, right = rightNode, triangle = null, area = leftNode.area + rightNode.area, depth = depth)
         } else {
@@ -205,16 +211,17 @@ class BVH(private val obj: ReadableObj) {
     private fun flatBVH(rootNode: BVHNode) {
         bvhMinFlatArray.add(Vec3(0))
         bvhMaxFlatArray.add(Vec3(0))
-        bvhTriangleIndexArray.add(-1)
+        bvhTriangleIndexArray.add(PassVariable.invalidTriangleIndex)
         val nodeQueue = LinkedList<BVHNode>()
         nodeQueue.add(rootNode)
+        Log.i(TAG, "start flatBVH, rootNode bound:${rootNode.bound}")
 
         // breadth first traverse to store in array
         while (nodeQueue.isNotEmpty()) {
             val node = nodeQueue.removeFirst()
             bvhMinFlatArray.add(node.bound.min)
             bvhMaxFlatArray.add(node.bound.max)
-//            Log.i(TAG, "flat ${node.bound} store in ${bvhFlatArray.size - 1}, queue.size:${nodeQueue.size}")
+//            Log.i(TAG, "flat ${node.bound} store in ${bvhMinFlatArray.size - 1}, queue.size:${nodeQueue.size}")
 
             if (node.left != null) {
                 nodeQueue.add(node.left)
@@ -224,14 +231,25 @@ class BVH(private val obj: ReadableObj) {
             }
             if (node.left == null && node.right == null) {
                 val triangle = node.triangle
-                val triangleIndex = triangleList.indexOf(triangle)
-//                Log.i(TAG, "store leaf triangle $triangleIndex in ${bvhTriangleIndexArray.size}")
+                val triangleIndex = indexOfTriangle(triangle)
+//                Log.i(TAG, "store leaf triangle $triangleIndex in ${bvhTriangleIndexArray.size}, triangle:$triangle")
                 leafNodeCount++
                 bvhTriangleIndexArray.add(triangleIndex)
             } else {
-                bvhTriangleIndexArray.add(-1)
+                bvhTriangleIndexArray.add(PassVariable.invalidTriangleIndex)
             }
         }
         Log.i(TAG, "flat bvh finished")
+    }
+
+    fun indexOfTriangle(triangle: Triangle?): Int {
+        if (triangle == null) return PassVariable.invalidTriangleIndex
+        for (index in triangleList.indices) {
+            val t = triangleList[index]
+            if (t.a == triangle.a && t.b == triangle.b && t.c == triangle.c) {
+                return index
+            }
+        }
+        return PassVariable.invalidTriangleIndex
     }
 }

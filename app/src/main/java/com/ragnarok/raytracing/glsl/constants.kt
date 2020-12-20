@@ -10,4 +10,5 @@ object PassVariable {
     const val eps = 0.0001
     const val bounces = 5
     const val infinity = 10000.0
+    const val invalidTriangleIndex = -1
 }

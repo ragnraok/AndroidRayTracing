@@ -15,13 +15,13 @@ val bvhTraceFS = { vertexNum: Int, bvhNodeNum: Int ->
     
     $commonDataFunc
     
-    Material material = createNormalMaterial(vec3(1.0), 0.01, 1.0);
+    Material material = createEmissiveMaterial(vec3(0.75), vec3(0.75), 0.01, 1.0);
     
     PointLight pointLight = PointLight(vec3(0.0, 0.95, 0.0), 0.1, vec3(1.0), 3.0);
     
     ${bvhTraceInput(vertexNum, bvhNodeNum)}
 
-    ${bvhCalcColor(vertexNum, bvhNodeNum)}
+    $bvhCalcColor
     
     $getRay
 

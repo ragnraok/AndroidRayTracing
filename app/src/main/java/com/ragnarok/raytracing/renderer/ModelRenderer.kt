@@ -18,10 +18,14 @@ import com.ragnarok.raytracing.utils.*
 import de.javagl.obj.ObjReader
 import de.javagl.obj.ObjUtils
 import de.javagl.obj.ReadableObj
+import glm_.BYTES
 import glm_.glm
 import glm_.mat4x4.Mat4
+import glm_.toInt
 import glm_.vec3.Vec3
 import rangarok.com.androidpbr.utils.Shader
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 import java.util.*
@@ -64,7 +68,7 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
 
     private var needToneMapping = false
 
-    private val center = Vec3(0)
+    private val center = Vec3(200, 100, 200)
 
     private var obj: ReadableObj? = null
     private var bvh: BVH? = null
@@ -77,9 +81,7 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
     private val pendingJob: ConcurrentLinkedQueue<()->Unit> = ConcurrentLinkedQueue()
 
     init {
-        camera = Camera(Vec3(0.0, 0.0, 2.5), 30.0f)
-        camera.shutterOpenTime = 0.0f
-        camera.shutterCloseTime = 1.0f
+        camera = Camera(Vec3(200, 100, 400), 60.0f)
         needToneMapping = true
 
         thread {
@@ -225,11 +227,12 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
 
     private fun setupBVHBufferInput(shader: Shader) {
         // https://www.khronos.org/opengl/wiki/Buffer_Texture
+        // https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_buffer.txt
         bvh?.let {
             // buffer texture slot start from 2
             var slot = textureUniformSlot + 1
 
-            val verticesBuffer = FloatBuffer.allocate(it.verticesArray.size * 3)
+            val verticesBuffer = ByteBuffer.allocateDirect(it.verticesArray.size * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer()
             for (vertex in it.verticesArray) {
                 verticesBuffer.put(vertex.x)
                 verticesBuffer.put(vertex.y)
@@ -239,7 +242,7 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
             verticesBufferTexture.bind(slot++, shader, "verticesBuffer")
             bvhDataBuffer["verticesBuffer"] = verticesBufferTexture
 
-            val minFlatBuffer = FloatBuffer.allocate(it.bvhMinFlatArray.size * 3)
+            val minFlatBuffer = ByteBuffer.allocateDirect(it.bvhMinFlatArray.size * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer()
             for (min in it.bvhMinFlatArray) {
                 minFlatBuffer.put(min.x)
                 minFlatBuffer.put(min.y)
@@ -247,9 +250,9 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
             }
             val minFlatBufferTexture = BufferTexture.create(minFlatBuffer, it.bvhMinFlatArray.size * 3)
             minFlatBufferTexture.bind(slot++, shader, "bvhMinBoundsBuffer")
-            bvhDataBuffer["bvhMinBoundsBuffer"]
+            bvhDataBuffer["bvhMinBoundsBuffer"] = minFlatBufferTexture
 
-            val maxFlatBuffer = FloatBuffer.allocate(it.bvhMaxFlatArray.size * 3)
+            val maxFlatBuffer = ByteBuffer.allocateDirect(it.bvhMaxFlatArray.size * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer()
             for (max in it.bvhMaxFlatArray) {
                 maxFlatBuffer.put(max.x)
                 maxFlatBuffer.put(max.y)
@@ -259,7 +262,10 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
             maxFlatBufferTexture.bind(slot++, shader, "bvhMaxBoundsBuffer")
             bvhDataBuffer["bvhMaxBoundsBuffer"] = maxFlatBufferTexture
 
-            val triangleIndexBuffer = IntBuffer.wrap(it.bvhTriangleIndexArray.toIntArray())
+            val triangleIndexBuffer = ByteBuffer.allocateDirect(it.bvhTriangleIndexArray.size * Int.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer()
+            for (index in it.bvhTriangleIndexArray) {
+                triangleIndexBuffer.put(index.toFloat())
+            }
             val triangleIndexBufferTexture = BufferTexture.create(triangleIndexBuffer, it.bvhTriangleIndexArray.size, isInt = true)
             triangleIndexBufferTexture.bind(slot, shader, "bvhTriangleIndexBuffer")
             bvhDataBuffer["bvhTriangleIndexBuffer"] = triangleIndexBufferTexture
@@ -310,6 +316,11 @@ class ModelRenderer(private val context: Context, private val modelAssetPath: St
     fun frameCount() = renderCount
 
     fun detach() {
+        post {
+            bvhDataBuffer.values.forEach {
+                it.release()
+            }
+        }
         this.view = null
     }
 

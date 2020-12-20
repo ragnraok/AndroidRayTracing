@@ -177,32 +177,39 @@ val intersectTriangle = """
     Intersection intersectTriangle(Ray ray, Triangle triangle) {
         Intersection intersect;
         float t = ${PassVariable.infinity};
-        vec3 e1 = triangle.p1 - triangle.p0;
-        vec3 e2 = triangle.p2 - triangle.p0;
-        vec3 pvec = cross(ray.direction, e2);
-        float det = dot(e1, pvec);
-        if (abs(det) <= ${PassVariable.eps}) {
-            intersect.t = ${PassVariable.infinity};
-            return intersect;
-        }
-        float invDet = 1.0 / det;
-        vec3 tvec = ray.origin - triangle.p0;
-        float u = dot(tvec, pvec) * invDet;
-        if (u < 0.0 || u > 1.0) {
-            intersect.t = ${PassVariable.infinity};
-            return intersect;
-        }
-        vec3 qvec = cross(tvec, e1);
-        float v = dot(ray.direction, qvec) * invDet;
-        if (v < 0.0 || u + v > 1.0) {
-            intersect.t = ${PassVariable.infinity};
-            return intersect;
-        }
-        t = dot(e2, qvec) * invDet;
-        if (t < 0.0) {
-            intersect.t = ${PassVariable.infinity};
-            return intersect;
-        }
+        do {
+            if (dot(-ray.direction, normalForTriangle(triangle)) > 0.0) {
+                t = ${PassVariable.infinity};
+                break;
+            } else {
+                vec3 e1 = triangle.p1 - triangle.p0;
+                vec3 e2 = triangle.p2 - triangle.p0;
+                vec3 pvec = cross(ray.direction, e2);
+                float det = dot(e1, pvec);
+                float invDet = 1.0 / det;
+                if (invDet > 1.0) {
+                    t = ${PassVariable.infinity};
+                    break;
+                }
+                vec3 tvec = ray.origin - triangle.p0;
+                float u = dot(tvec, pvec) * invDet;
+                if (u < 0.0 || u > 1.0) {
+                    t = ${PassVariable.infinity};
+                    break;
+                }
+                vec3 qvec = cross(tvec, e1);
+                float v = dot(ray.direction, qvec) * invDet;
+                if (v < 0.0 || u + v > 1.0) {
+                    t = ${PassVariable.infinity};
+                    break;
+                } else {
+                    t = dot(e2, qvec) * invDet;
+                }
+                if (t < 0.0) {
+                    t = ${PassVariable.infinity};
+                }
+            }
+        } while (false);
         intersect.nearFar = vec2(t, t);
         intersect.t = intersect.nearFar.x;
         intersect.hit = pointAt(ray, intersect.t);
@@ -212,11 +219,8 @@ val intersectTriangle = """
 
 @Language("glsl")
 val intersectBound = """
-    Intersection intersectBound(Ray ray, Bound bound) {
-        vec3 invDir = 1.0f / ray.direction;
-        vec3 dirIsNeg = vec3(ray.direction.x > 0.0 ? 1.0 : 0.0, 
-                             ray.direction.y > 0.0 ? 1.0 : 0.0,
-                             ray.direction.z > 0.0 ? 1.0 : 0.0);
+    bool isIntersectBound(Ray ray, Bound bound) {
+        vec3 invDir = vec3(1.0 / ray.direction.x, 1.0 / ray.direction.y, 1.0 / ray.direction.z);
         float txMin = (bound.min.x - ray.origin.x) * invDir.x;
         float txMax = (bound.max.x - ray.origin.x) * invDir.x;
         
@@ -226,31 +230,29 @@ val intersectBound = """
         float tzMin = (bound.min.z - ray.origin.z) * invDir.z;
         float tzMax = (bound.max.z - ray.origin.z) * invDir.z;
         
-        Intersection intersect;
-        float t = ${PassVariable.infinity};
-        
-        if (dirIsNeg.x == 0.0) {
-            t = txMin;
+        if (ray.direction.x < 0.0) {
+            float t = txMin;
             txMin = txMax;
             txMax = t;
         }
-        if (dirIsNeg.y == 0.0) {
-            t = tyMin;
+        if (ray.direction.y < 0.0) {
+            float t = tyMin;
             tyMin = tyMax;
             tyMax = t;
         }
-        if (dirIsNeg.z == 0.0) {
-            t = tzMin;
+        if (ray.direction.z < 0.0) {
+            float t = tzMin;
             tzMin = tzMax;
             tzMax = t;
         }
         float tMin = max(txMin, max(tyMin, tzMin));
         float tMax = min(txMax, min(tyMax, tzMax));
         
-        intersect.nearFar = vec2(tMin, tMax);
-        intersect.t = intersect.nearFar.x;
-        intersect.hit = pointAt(ray, intersect.t);
-        return intersect;
+        if (tMin <= tMax && tMax >= 0.0) {
+            return true;
+        }
+       
+        return false;
         
     }
 """.trimIndent()
